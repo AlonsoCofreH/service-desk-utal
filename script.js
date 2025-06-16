@@ -227,16 +227,24 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function iniciarSesion(user) {
+    console.log("Iniciando sesión como:", user);
     userNameSpan.textContent = user.email;
     loginScreen.style.display = "none";
     appScreen.style.display = "block";
 
     if (user.role === "agente") {
+      console.log("Configurando vista de agente");
       ticketFormContainer.style.display = "none";
       unassignedTicketsContainer.style.display = "block";
-      mostrarTicketsSinAsignar();
-      mostrarTicketsAsignados();
+      // Asegurarnos de que ambas funciones se ejecuten
+      Promise.all([
+        mostrarTicketsSinAsignar(),
+        mostrarTicketsAsignados()
+      ]).catch(error => {
+        console.error("Error al cargar tickets del agente:", error);
+      });
     } else {
+      console.log("Configurando vista de usuario");
       ticketFormContainer.style.display = "block";
       unassignedTicketsContainer.style.display = "none";
       mostrarTickets();
@@ -451,7 +459,9 @@ document.addEventListener("DOMContentLoaded", () => {
     unassignedTickets.innerHTML = "";
     
     try {
+      console.log("Obteniendo tickets sin asignar...");
       const ticketsSinAsignar = await obtenerTicketsSinAsignar();
+      console.log("Tickets sin asignar encontrados:", ticketsSinAsignar);
       
       if (ticketsSinAsignar.length === 0) {
         unassignedTickets.innerHTML = '<p class="mensaje-info">No hay tickets sin asignar.</p>';
@@ -459,6 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       
       ticketsSinAsignar.forEach(ticket => {
+        console.log("Procesando ticket sin asignar:", ticket);
         const div = crearElementoTicket(ticket, "agente-sinasignar");
         unassignedTickets.appendChild(div);
       });
@@ -472,7 +483,9 @@ document.addEventListener("DOMContentLoaded", () => {
     ticketList.innerHTML = "";
     
     try {
+      console.log("Obteniendo tickets asignados para:", currentUser.email);
       const ticketsAsignados = await obtenerTicketsAsignados(currentUser.email);
+      console.log("Tickets asignados encontrados:", ticketsAsignados);
       
       if (ticketsAsignados.length === 0) {
         ticketList.innerHTML = '<p class="mensaje-info">No tienes tickets asignados.</p>';
@@ -480,6 +493,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       
       ticketsAsignados.forEach(ticket => {
+        console.log("Procesando ticket asignado:", ticket);
         const div = crearElementoTicket(ticket, "agente-asignado");
         ticketList.appendChild(div);
       });

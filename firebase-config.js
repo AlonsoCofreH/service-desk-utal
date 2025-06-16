@@ -147,34 +147,56 @@ async function obtenerTicketsUsuario(email) {
 
 async function obtenerTicketsSinAsignar() {
   try {
+    console.log("Consultando tickets sin asignar en Firestore...");
     const querySnapshot = await ticketsCollection
       .where('asignadoA', '==', null)
       .orderBy('fechaCreacion', 'desc')
       .get();
     
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    console.log("Query ejecutada, documentos encontrados:", querySnapshot.size);
+    
+    const tickets = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log("Documento encontrado:", { id: doc.id, ...data });
+      return {
+        id: doc.id,
+        ...data,
+        fechaCreacion: data.fechaCreacion?.toDate?.() || new Date(),
+        fechaLimite: data.fechaLimite?.toDate?.() || new Date()
+      };
+    });
+    
+    return tickets;
   } catch (error) {
     console.error("Error al obtener tickets sin asignar:", error);
-    return [];
+    throw error;
   }
 }
 
 async function obtenerTicketsAsignados(email) {
   try {
+    console.log("Consultando tickets asignados en Firestore para:", email);
     const querySnapshot = await ticketsCollection
       .where('asignadoA', '==', email)
       .orderBy('fechaCreacion', 'desc')
       .get();
     
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    console.log("Query ejecutada, documentos encontrados:", querySnapshot.size);
+    
+    const tickets = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log("Documento encontrado:", { id: doc.id, ...data });
+      return {
+        id: doc.id,
+        ...data,
+        fechaCreacion: data.fechaCreacion?.toDate?.() || new Date(),
+        fechaLimite: data.fechaLimite?.toDate?.() || new Date()
+      };
+    });
+    
+    return tickets;
   } catch (error) {
     console.error("Error al obtener tickets asignados:", error);
-    return [];
+    throw error;
   }
 }

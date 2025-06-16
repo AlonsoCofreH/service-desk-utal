@@ -110,27 +110,119 @@ document.addEventListener("DOMContentLoaded", () => {
   ticketType.addEventListener("change", handleTypeChange);
   
   // Funciones principales
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
     
     // Validar el formulario
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-    const role = document.getElementById("role").value;
     
-    if (!email || !password || !role) {
+    if (!email || !password) {
       mostrarMensaje("Por favor, complete todos los campos", "error");
       return;
     }
-    
-    // En un sistema real, aquí se verificaría contra una base de datos
-    // Por ahora, simulamos una autenticación exitosa
-    currentUser = { email, role };
-    
-    // Guardar en localStorage
-    localStorage.setItem("currentUser", JSON.stringify(currentUser));
-    
-    iniciarSesion(currentUser);
+
+    try {
+      // Verificar si el usuario está autorizado
+      const verificacion = await verificarUsuarioAutorizado(email);
+      
+      if (!verificacion.autorizado) {
+        mostrarMensaje(verificacion.mensaje, "error");
+        return;
+      }
+
+      // Intentar iniciar sesión con Firebase
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+
+      // Guardar información del usuario
+      currentUser = {
+        email: user.email,
+        role: verificacion.rol
+      };
+      
+      // Guardar en localStorage
+      localStorage.setItem("currentUser", JSON.stringify(currentUser));
+      
+      iniciarSesion(currentUser);
+      mostrarMensaje("Inicio de sesión exitoso", "success");
+    } catch (error) {
+      console.error("Error de autenticación:", error);
+      
+      // Manejar errores específicos
+      let mensaje = "Error al iniciar sesión";
+      if (error.code === 'auth/user-not-found') {
+        mensaje = "El usuario no existe";
+      } else if (error.code === 'auth/wrong-password') {
+        mensaje = "Contraseña incorrecta";
+      } else if (error.code === 'auth/invalid-email') {
+        mensaje = "Correo electrónico inválido";
+      }
+      
+      mostrarMensaje(mensaje, "error");
+    }
+  }
+
+  // Función para registrar un nuevo usuario (primera vez)
+  async function registrarPrimerUsuario(email, password, rol) {
+    try {
+      // Crear usuario en Firebase Auth
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+
+      // Registrar en la colección de usuarios autorizados
+      const resultado = await registrarUsuarioAutorizado(email, rol);
+      
+      if (resultado.exito) {
+        mostrarMensaje("Usuario registrado exitosamente", "success");
+        return true;
+      } else {
+        mostrarMensaje(resultado.mensaje, "error");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error al registrar usuario:", error);
+      mostrarMensaje("Error al registrar el usuario", "error");
+      return false;
+    }
+  }
+
+  // Escuchar cambios en el estado de autenticación
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      // Usuario ha iniciado sesión
+      const verificacion = await verificarUsuarioAutorizado(user.email);
+      if (verificacion.autorizado) {
+        currentUser = {
+          email: user.email,
+          role: verificacion.rol
+        };
+        localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        iniciarSesion(currentUser);
+      } else {
+        // Si el usuario no está autorizado, cerrar sesión
+        await auth.signOut();
+        mostrarMensaje(verificacion.mensaje, "error");
+      }
+    } else {
+      // Usuario ha cerrado sesión
+      handleLogout();
+    }
+  });
+
+  async function handleLogout() {
+    try {
+      await auth.signOut();
+      currentUser = null;
+      localStorage.removeItem("currentUser");
+      loginScreen.style.display = "block";
+      appScreen.style.display = "none";
+      document.getElementById("loginForm").reset();
+      mostrarMensaje("Sesión cerrada exitosamente", "success");
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      mostrarMensaje("Error al cerrar sesión", "error");
+    }
   }
 
   function iniciarSesion(user) {
@@ -148,14 +240,6 @@ document.addEventListener("DOMContentLoaded", () => {
       unassignedTicketsContainer.style.display = "none";
       mostrarTickets();
     }
-  }
-
-  function handleLogout() {
-    currentUser = null;
-    localStorage.removeItem("currentUser");
-    loginScreen.style.display = "block";
-    appScreen.style.display = "none";
-    document.getElementById("loginForm").reset();
   }
 
   function createTicket(e) {

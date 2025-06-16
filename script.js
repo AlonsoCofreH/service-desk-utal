@@ -14,32 +14,139 @@ document.addEventListener("DOMContentLoaded", () => {
   const urgencySelect = document.getElementById("urgency");
   const priorityValue = document.getElementById("priorityValue");
   const slaValue = document.getElementById("slaValue");
+  
   const ticketCategory = document.getElementById("ticketCategory");
   const ticketService = document.getElementById("ticketService");
+  const ticketType = document.getElementById("ticketType");
 
   const serviciosPorCategoria = {
-    incidente: ["Computadora", "Impresora", "Internet", "Access Point", "Biométrico"],
-    solicitud: ["SAP", "Educandus", "Biblioteca", "Talana", "Office365", "Proyector"]
-};
+    "Computadora": {
+      tipos: {
+        "No enciende": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Pantalla azul": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Lentitud": { tipo: "incidente", urgencia: "media", impacto: "medio" },
+        "Problemas de software": { tipo: "incidente", urgencia: "media", impacto: "medio" },
+        "Problemas de hardware": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Virus/Malware": { tipo: "incidente", urgencia: "alta", impacto: "alto" }
+      }
+    },
+    "SAP": {
+      tipos: {
+        "Crear cuenta": { tipo: "solicitud", urgencia: "media", impacto: "medio" },
+        "Recuperar contraseña": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Problemas de acceso": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Error en transacción": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Solicitud de permisos": { tipo: "solicitud", urgencia: "media", impacto: "medio" }
+      }
+    },
+    "Biblioteca": {
+      tipos: {
+        "Préstamo de libros": { tipo: "solicitud", urgencia: "baja", impacto: "bajo" },
+        "Acceso a recursos digitales": { tipo: "incidente", urgencia: "media", impacto: "medio" },
+        "Renovación de membresía": { tipo: "solicitud", urgencia: "baja", impacto: "bajo" },
+        "Problemas con devolución": { tipo: "incidente", urgencia: "media", impacto: "medio" },
+        "Solicitud de material": { tipo: "solicitud", urgencia: "baja", impacto: "bajo" }
+      }
+    },
+    "Internet": {
+      tipos: {
+        "Sin conexión": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Conexión lenta": { tipo: "incidente", urgencia: "media", impacto: "medio" },
+        "Problemas con WiFi": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Configuración de red": { tipo: "solicitud", urgencia: "media", impacto: "medio" },
+        "Problemas de DNS": { tipo: "incidente", urgencia: "alta", impacto: "alto" }
+      }
+    },
+    "Office365": {
+      tipos: {
+        "Crear cuenta": { tipo: "solicitud", urgencia: "media", impacto: "medio" },
+        "Recuperar contraseña": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Instalación": { tipo: "solicitud", urgencia: "media", impacto: "medio" },
+        "Problemas de sincronización": { tipo: "incidente", urgencia: "media", impacto: "medio" },
+        "Solicitud de licencia": { tipo: "solicitud", urgencia: "baja", impacto: "bajo" }
+      }
+    },
+    "Impresora": {
+      tipos: {
+        "No imprime": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Atasco de papel": { tipo: "incidente", urgencia: "media", impacto: "medio" },
+        "Problemas de conexión": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Cambio de tóner": { tipo: "solicitud", urgencia: "media", impacto: "medio" },
+        "Configuración de red": { tipo: "solicitud", urgencia: "media", impacto: "medio" }
+      }
+    },
+    "Access Point": {
+      tipos: {
+        "Sin señal": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Problemas de conexión": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Configuración": { tipo: "solicitud", urgencia: "media", impacto: "medio" },
+        "Reemplazo de equipo": { tipo: "solicitud", urgencia: "media", impacto: "medio" },
+        "Problemas de cobertura": { tipo: "incidente", urgencia: "alta", impacto: "alto" }
+      }
+    },
+    "Biométrico": {
+      tipos: {
+        "Registro de huella": { tipo: "solicitud", urgencia: "media", impacto: "medio" },
+        "Problemas de acceso": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Reemplazo de tarjeta": { tipo: "solicitud", urgencia: "media", impacto: "medio" },
+        "Error de lectura": { tipo: "incidente", urgencia: "alta", impacto: "alto" },
+        "Mantenimiento": { tipo: "solicitud", urgencia: "baja", impacto: "bajo" }
+      }
+    }
+  };
 
   ticketCategory.addEventListener("change", () => {
-  const categoria = ticketCategory.value;
-  const servicios = serviciosPorCategoria[categoria] || [];
+    const categoria = ticketCategory.value;
+    const servicios = Object.keys(serviciosPorCategoria[categoria]?.tipos || {});
 
-  // Limpiar servicios anteriores
-  ticketService.innerHTML = '<option value="" disabled selected>Selecciona un servicio</option>';
+    // Limpiar servicios anteriores
+    ticketService.innerHTML = '<option value="" disabled selected>Selecciona un servicio</option>';
 
-  // Agregar nuevos
-  servicios.forEach(servicio => {
-    const option = document.createElement("option");
-    option.value = servicio;
-    option.textContent = servicio;
-    ticketService.appendChild(option);
+    // Agregar nuevos
+    servicios.forEach(servicio => {
+      const option = document.createElement("option");
+      option.value = servicio;
+      option.textContent = servicio;
+      ticketService.appendChild(option);
+    });
+
+    updatePriorityAndSLA(); // si también quieres que se actualice prioridad y SLA
   });
 
-  updatePriorityAndSLA(); // si también quieres que se actualice prioridad y SLA
-});
+  ticketService.addEventListener("change", () => {
+    const servicio = ticketService.value;
+    const tipos = Object.keys(serviciosPorCategoria[servicio]?.tipos || {});
 
+    // Limpiar tipos anteriores
+    ticketType.innerHTML = '<option value="" disabled selected>Selecciona el tipo de servicio</option>';
+
+    // Agregar nuevos tipos
+    tipos.forEach(tipo => {
+      const option = document.createElement("option");
+      option.value = tipo;
+      option.textContent = tipo;
+      ticketType.appendChild(option);
+    });
+
+    // Limpiar valores de impacto y urgencia
+    document.getElementById("impact").value = "";
+    document.getElementById("urgency").value = "";
+    updatePriorityAndSLA();
+  });
+
+  ticketType.addEventListener("change", () => {
+    const servicio = ticketService.value;
+    const tipo = ticketType.value;
+    
+    if (servicio && tipo) {
+      const info = serviciosPorCategoria[servicio].tipos[tipo];
+      if (info) {
+        document.getElementById("impact").value = info.impacto;
+        document.getElementById("urgency").value = info.urgencia;
+        updatePriorityAndSLA();
+      }
+    }
+  });
 
   // Cargar datos desde localStorage si existen
   let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
@@ -111,28 +218,30 @@ document.addEventListener("DOMContentLoaded", () => {
   function createTicket(e) {
     e.preventDefault();
     
-    // Validar formulario
-    const tipo = document.getElementById("ticketCategory").value;
     const servicio = document.getElementById("ticketService").value;
+    const tipoServicio = document.getElementById("ticketType").value;
     const descripcion = document.getElementById("ticketDescription").value;
-    const impacto = document.getElementById("impact").value;
-    const urgencia = document.getElementById("urgency").value;
     
-    if (!tipo || !servicio || !descripcion || !impacto || !urgencia) {
+    if (!servicio || !tipoServicio || !descripcion) {
       mostrarMensaje("Por favor, complete todos los campos del ticket", "error");
       return;
     }
+
+    const info = serviciosPorCategoria[servicio].tipos[tipoServicio];
+    const impacto = info.impacto;
+    const urgencia = info.urgencia;
+    const tipo = info.tipo;
     
     const prioridad = calcularPrioridad(impacto, urgencia);
-    const sla = obtenerSLA(tipo, prioridad);
+    const sla = obtenerSLA(servicio, tipoServicio);
     const fechaCreacion = new Date().toLocaleString();
     const fechaLimite = calcularFechaLimite(sla);
 
-    // Crear nuevo ticket
     const nuevoTicket = {
-      id: Date.now(), // ID único basado en timestamp
+      id: Date.now(),
       tipo,
       servicio,
+      tipoServicio,
       descripcion,
       impacto,
       urgencia,
@@ -164,18 +273,29 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updatePriorityAndSLA() {
-  
-    const impacto = "alto";
-    const urgencia = "alta";
-    const tipo = ticketCategory.value;
+    const servicio = ticketService.value;
+    const tipo = ticketType.value;
     
-    if (impacto && urgencia) {
-      const prioridad = calcularPrioridad(impacto, urgencia);
-      priorityValue.textContent = prioridad;
-      
-      if (tipo) {
-        slaValue.textContent = obtenerSLA(tipo);
+    if (servicio && tipo) {
+      const info = serviciosPorCategoria[servicio].tipos[tipo];
+      if (info) {
+        document.getElementById("impact").value = info.impacto;
+        document.getElementById("urgency").value = info.urgencia;
+        
+        const prioridad = calcularPrioridad(info.impacto, info.urgencia);
+        priorityValue.textContent = prioridad;
+        
+        const sla = obtenerSLA(servicio, tipo);
+        slaValue.textContent = sla;
+        
+        // Actualizar el tipo de ticket (incidente/solicitud)
+        document.getElementById("ticketTypeValue").textContent = 
+          info.tipo === 'incidente' ? 'Incidente' : 'Solicitud';
       }
+    } else {
+      priorityValue.textContent = "N/A";
+      slaValue.textContent = "N/A";
+      document.getElementById("ticketTypeValue").textContent = "N/A";
     }
   }
 
@@ -190,15 +310,20 @@ document.addEventListener("DOMContentLoaded", () => {
     return matriz[impacto][urgencia];
   }
 
-  function obtenerSLA(tipo) {
-    // SLA simplificado basado solo en tipo
-    if (tipo === 'incidente') {
-      return '8 horas';
-    } else if (tipo === 'solicitud') {
-      return '24 horas';
-    } else {
-      return 'N/A';
-    }
+  function obtenerSLA(servicio) {
+    // SLA basado en el servicio
+    const slas = {
+      'Computadora': '4 horas',
+      'Internet': '2 horas',
+      'Access Point': '4 horas',
+      'Impresora': '8 horas',
+      'Biométrico': '4 horas',
+      'SAP': '24 horas',
+      'Biblioteca': '24 horas',
+      'Office365': '24 horas'
+    };
+    
+    return slas[servicio] || '24 horas';
   }
 
   function calcularFechaLimite(sla) {
@@ -366,7 +491,6 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   function mostrarModalDetalles(ticket) {
-    // Crear el modal
     const modal = document.createElement("div");
     modal.className = "modal";
     modal.innerHTML = `
@@ -376,8 +500,8 @@ document.addEventListener("DOMContentLoaded", () => {
         
         <div class="detalles-ticket">
           <div class="info-principal">
-            <p><strong>Tipo:</strong> ${ticket.tipo}</p>
             <p><strong>Servicio:</strong> ${ticket.servicio}</p>
+            <p><strong>Tipo de Servicio:</strong> ${ticket.tipoServicio}</p>
             <p><strong>Descripción:</strong> ${ticket.descripcion}</p>
             <p><strong>Impacto:</strong> ${ticket.impacto} | <strong>Urgencia:</strong> ${ticket.urgencia}</p>
             <p><strong>Prioridad:</strong> <span class="prioridad ${ticket.prioridad.toLowerCase()}">${ticket.prioridad}</span></p>

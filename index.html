@@ -71,31 +71,40 @@
         <form id="ticketForm">
           <div class="form-row">
             <div class="form-col">
-              <label for="ticketCategory">Categoría:</label>
-              <select id="ticketCategory" required>
-                <option value="" disabled selected>Selecciona una categoría</option>
-                <option value="incidente">Incidente</option>
-                <option value="solicitud">Solicitud</option>
+              <label for="ticketService">Servicio:</label>
+              <select id="ticketService" required>
+                <option value="" disabled selected>Selecciona un servicio</option>
+                <option value="Computadora">Computadora</option>
+                <option value="SAP">SAP</option>
+                <option value="Biblioteca">Biblioteca</option>
+                <option value="Internet">Internet</option>
+                <option value="Office365">Office365</option>
+                <option value="Impresora">Impresora</option>
+                <option value="Access Point">Access Point</option>
+                <option value="Biométrico">Biométrico</option>
               </select>
             </div>
             
             <div class="form-col">
-              <label for="ticketService">Servicio:</label>
-              <select id="ticketService" required>
-                <option value="" disabled selected>Selecciona un servicio</option>
-
+              <label for="ticketType">Tipo de Servicio:</label>
+              <select id="ticketType" required>
+                <option value="" disabled selected>Selecciona el tipo de servicio</option>
               </select>
             </div>
           </div>
 
-        <!-- Impacto y Urgencia asignados automáticamente -->
-        <input type="hidden" id="impact" value="alto">
-        <input type="hidden" id="urgency" value="alta">
+          <!-- Campos ocultos para impacto y urgencia -->
+          <input type="hidden" id="impact" value="">
+          <input type="hidden" id="urgency" value="">
 
           <label for="ticketDescription">Descripción:</label>
           <textarea id="ticketDescription" placeholder="Describe el problema o solicitud..." required></textarea>
 
           <div class="info-dinamica">
+            <div class="info-item">
+              <i class="fas fa-tag"></i>
+              <p><strong>Tipo:</strong> <span id="ticketTypeValue">N/A</span></p>
+            </div>
             <div class="info-item">
               <i class="fas fa-flag"></i>
               <p><strong>Prioridad:</strong> <span id="priorityValue">N/A</span></p>

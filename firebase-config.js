@@ -20,20 +20,27 @@ const db = firebase.firestore();
 
 // Colección de usuarios autorizados
 const usuariosAutorizados = db.collection('usuariosAutorizados');
+// Colección de tickets
+const ticketsCollection = db.collection('tickets');
 
 // Función para verificar si un correo está autorizado
 async function verificarUsuarioAutorizado(email) {
   try {
+    console.log("Verificando usuario:", email);
     const querySnapshot = await usuariosAutorizados.where('email', '==', email).get();
+    
+    console.log("Resultados de la búsqueda:", querySnapshot.size, "documentos encontrados");
     
     if (!querySnapshot.empty) {
       const doc = querySnapshot.docs[0];
+      console.log("Documento encontrado:", doc.data());
       return {
         autorizado: true,
         rol: doc.data().rol
       };
     }
     
+    console.log("No se encontró el documento para el email:", email);
     return {
       autorizado: false,
       mensaje: "Este correo no está autorizado para usar el sistema"
@@ -50,7 +57,7 @@ async function verificarUsuarioAutorizado(email) {
 // Función para registrar un nuevo usuario autorizado (solo para administradores)
 async function registrarUsuarioAutorizado(email, rol) {
   try {
-    await usuariosAutorizados.doc(email).set({
+    await usuariosAutorizados.add({
       email: email,
       rol: rol,
       fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()
@@ -66,4 +73,148 @@ async function registrarUsuarioAutorizado(email, rol) {
       mensaje: "Error al registrar el usuario"
     };
   }
-} 
+}
+
+// Funciones para manejar tickets
+async function crearTicketEnFirebase(ticket) {
+  try {
+    console.log("Iniciando creación de ticket en Firebase...");
+    console.log("Datos recibidos:", ticket);
+    
+    // Crear el timestamp actual
+    const ahora = new Date();
+    
+    const docRef = await ticketsCollection.add({
+      ...ticket,
+      fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+      estado: "Abierto",
+      asignadoA: null,
+      historial: [{
+        fecha: firebase.firestore.Timestamp.fromDate(ahora),
+        accion: "Ticket creado",
+        usuario: ticket.creadoPor
+      }]
+    });
+    
+    console.log("Ticket creado con ID:", docRef.id);
+    return {
+      exito: true,
+      id: docRef.id,
+      mensaje: "Ticket creado exitosamente"
+    };
+  } catch (error) {
+    console.error("Error detallado en crearTicketEnFirebase:", error);
+    console.error("Stack trace:", error.stack);
+    return {
+      exito: false,
+      mensaje: "Error al crear el ticket: " + error.message
+    };
+  }
+}
+
+async function actualizarTicketEnFirebase(ticketId, datos) {
+  try {
+    console.log("Actualizando ticket en Firestore:", { ticketId, datos });
+    
+    // Verificar que el ticket existe
+    const ticketRef = ticketsCollection.doc(ticketId);
+    const ticketDoc = await ticketRef.get();
+    
+    if (!ticketDoc.exists) {
+      console.error("El ticket no existe:", ticketId);
+      return {
+        exito: false,
+        mensaje: "El ticket no existe"
+      };
+    }
+
+    // Actualizar el ticket
+    await ticketRef.update(datos);
+    console.log("Ticket actualizado exitosamente");
+    
+    return {
+      exito: true,
+      mensaje: "Ticket actualizado exitosamente"
+    };
+  } catch (error) {
+    console.error("Error detallado al actualizar ticket:", error);
+    console.error("Stack trace:", error.stack);
+    return {
+      exito: false,
+      mensaje: "Error al actualizar el ticket: " + error.message
+    };
+  }
+}
+
+async function obtenerTicketsUsuario(email) {
+  try {
+    const querySnapshot = await ticketsCollection
+      .where('creadoPor', '==', email)
+      .orderBy('fechaCreacion', 'desc')
+      .get();
+    
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error("Error al obtener tickets:", error);
+    return [];
+  }
+}
+
+async function obtenerTicketsSinAsignar() {
+  try {
+    console.log("Consultando tickets sin asignar en Firestore...");
+    const querySnapshot = await ticketsCollection
+      .where('asignadoA', '==', null)
+      .orderBy('fechaCreacion', 'desc')
+      .get();
+    
+    console.log("Query ejecutada, documentos encontrados:", querySnapshot.size);
+    
+    const tickets = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log("Documento encontrado:", { id: doc.id, ...data });
+      return {
+        id: doc.id,
+        ...data,
+        fechaCreacion: data.fechaCreacion?.toDate?.() || new Date(),
+        fechaLimite: data.fechaLimite?.toDate?.() || new Date()
+      };
+    });
+    
+    return tickets;
+  } catch (error) {
+    console.error("Error al obtener tickets sin asignar:", error);
+    throw error;
+  }
+}
+
+async function obtenerTicketsAsignados(email) {
+  try {
+    console.log("Consultando tickets asignados en Firestore para:", email);
+    const querySnapshot = await ticketsCollection
+      .where('asignadoA', '==', email)
+      .orderBy('fechaCreacion', 'desc')
+      .get();
+    
+    console.log("Query ejecutada, documentos encontrados:", querySnapshot.size);
+    
+    const tickets = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      console.log("Documento encontrado:", { id: doc.id, ...data });
+      return {
+        id: doc.id,
+        ...data,
+        fechaCreacion: data.fechaCreacion?.toDate?.() || new Date(),
+        fechaLimite: data.fechaLimite?.toDate?.() || new Date()
+      };
+    });
+    
+    return tickets;
+  } catch (error) {
+    console.error("Error al obtener tickets asignados:", error);
+    throw error;
+  }
+}

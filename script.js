@@ -503,10 +503,45 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Función auxiliar para formatear fechas
+  function formatearFecha(timestamp) {
+    if (!timestamp) return 'N/A';
+    const fecha = timestamp.toDate();
+    return fecha.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  // Función para calcular tiempo restante
+  function calcularTiempoRestante(fechaLimite) {
+    if (!fechaLimite) return 'N/A';
+    const ahora = new Date();
+    const limite = fechaLimite.toDate();
+    const diferencia = limite - ahora;
+    
+    if (diferencia < 0) return 'Vencido';
+    
+    const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+    const horas = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
+    
+    if (dias > 0) return `${dias}d ${horas}h restantes`;
+    if (horas > 0) return `${horas}h ${minutos}m restantes`;
+    return `${minutos}m restantes`;
+  }
+
   function crearElementoTicket(ticket, tipo) {
     const div = document.createElement("div");
     div.className = `ticket ${ticket.prioridad.toLowerCase()}`;
     div.dataset.id = ticket.id;
+    
+    // Formatear fechas
+    const fechaCreacionFormateada = formatearFecha(ticket.fechaCreacion);
+    const tiempoRestante = calcularTiempoRestante(ticket.fechaLimite);
     
     // Información básica del ticket
     let contenido = `
@@ -520,8 +555,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <p><strong>Descripción:</strong> ${ticket.descripcion}</p>
         <p><strong>Prioridad:</strong> <span class="prioridad ${ticket.prioridad.toLowerCase()}">${ticket.prioridad}</span></p>
         <p><strong>SLA:</strong> ${ticket.sla}</p>
-        <p><strong>Fecha creación:</strong> ${ticket.fechaCreacion?.toLocaleString() || 'N/A'}</p>
-        <p><strong>Fecha límite:</strong> ${ticket.fechaLimite?.toLocaleString() || 'N/A'}</p>
+        <p><strong>Fecha creación:</strong> ${fechaCreacionFormateada}</p>
+        <p><strong>Tiempo restante:</strong> ${tiempoRestante}</p>
     `;
     
     // Añadir información específica según el tipo de usuario

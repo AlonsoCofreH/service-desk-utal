@@ -24,16 +24,21 @@ const usuariosAutorizados = db.collection('usuariosAutorizados');
 // Función para verificar si un correo está autorizado
 async function verificarUsuarioAutorizado(email) {
   try {
+    console.log("Verificando usuario:", email);
     const querySnapshot = await usuariosAutorizados.where('email', '==', email).get();
+    
+    console.log("Resultados de la búsqueda:", querySnapshot.size, "documentos encontrados");
     
     if (!querySnapshot.empty) {
       const doc = querySnapshot.docs[0];
+      console.log("Documento encontrado:", doc.data());
       return {
         autorizado: true,
         rol: doc.data().rol
       };
     }
     
+    console.log("No se encontró el documento para el email:", email);
     return {
       autorizado: false,
       mensaje: "Este correo no está autorizado para usar el sistema"
@@ -50,7 +55,7 @@ async function verificarUsuarioAutorizado(email) {
 // Función para registrar un nuevo usuario autorizado (solo para administradores)
 async function registrarUsuarioAutorizado(email, rol) {
   try {
-    await usuariosAutorizados.doc(email).set({
+    await usuariosAutorizados.add({
       email: email,
       rol: rol,
       fechaRegistro: firebase.firestore.FieldValue.serverTimestamp()

@@ -1,0 +1,547 @@
+/* Variables para colores consistentes */
+:root {
+  --primary-color: #3498db;
+  --primary-hover: #2980b9;
+  --secondary-color: #2c3e50;
+  --accent-color: #e74c3c;
+  --light-bg: #f0f4f8;
+  --white: #ffffff;
+  --gray: #bdc3c7;
+  --dark-gray: #7f8c8d;
+  --success: #27ae60;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --info: #3498db;
+  --border-radius: 6px;
+  --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+/* Reset y estilos base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  background-color: var(--light-bg);
+  color: var(--secondary-color);
+  line-height: 1.6;
+}
+
+h2, h3 {
+  color: var(--secondary-color);
+  margin-bottom: 1rem;
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary-color);
+  transition: var(--transition);
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+/* Estilos de contenedores */
+.login-container, .ticket-form, .ticket-list, .unassigned-tickets {
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+}
+
+.login-container {
+  max-width: 450px;
+  margin: 3rem auto;
+  padding: 2rem;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.login-header h2 {
+  font-size: 2rem;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.login-header p {
+  color: var(--dark-gray);
+  font-size: 1.1rem;
+}
+
+/* Estilos para formularios */
+.input-group {
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--secondary-color);
+}
+
+.input-icon {
+  position: relative;
+}
+
+.input-icon i {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dark-gray);
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 0.75rem;
+  padding-left: 2.5rem;
+  border: 1px solid var(--gray);
+  border-radius: var(--border-radius);
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.7em top 50%;
+  background-size: 1.2em auto;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 120px;
+  padding: 0.75rem;
+}
+
+button {
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+button:hover {
+  background-color: var(--primary-hover);
+}
+
+button i {
+  font-size: 1.1rem;
+}
+
+.btn-login {
+  margin-top: 1rem;
+}
+
+/* App container y dashboard */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  background-color: var(--secondary-color);
+  color: var(--white);
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.user-info span {
+  font-weight: 500;
+}
+
+.user-info button {
+  background-color: transparent;
+  border: 1px solid var(--white);
+  padding: 0.5rem 1rem;
+}
+
+.user-info button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dashboard {
+  display: flex;
+  padding: 1.5rem;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+@media (max-width: 992px) {
+  .dashboard {
+    flex-direction: column;
+  }
+}
+
+/* Formulario de tickets */
+.ticket-form {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-col {
+  flex: 1;
+}
+
+.info-dinamica {
+  background-color: var(--light-bg);
+  border-radius: var(--border-radius);
+  padding: 1rem;
+  margin: 1rem 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-item i {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+}
+
+/* Lista de tickets */
+.ticket-list-container {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ticket-list, .unassigned-tickets {
+  padding: 1.5rem;
+}
+
+.tickets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.tickets-grid::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tickets-grid::-webkit-scrollbar-track {
+  background: var(--light-bg);
+  border-radius: 10px;
+}
+
+.tickets-grid::-webkit-scrollbar-thumb {
+  background: var(--gray);
+  border-radius: 10px;
+}
+
+.tickets-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--dark-gray);
+}
+
+.ticket {
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+  transition: var(--transition);
+  border-left: 5px solid var(--gray);
+}
+
+.ticket.alta {
+  border-left-color: var(--danger);
+}
+
+.ticket.media {
+  border-left-color: var(--warning);
+}
+
+.ticket.baja {
+  border-left-color: var(--success);
+}
+
+.ticket:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.ticket-header {
+  padding: 0.75rem 1rem;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.ticket-id {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.ticket-estado {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.ticket-estado.abierto {
+  background-color: #e3f2fd;
+  color: #0077c2;
+}
+
+.ticket-estado.en-proceso {
+  background-color: #fff8e1;
+  color: #ff8f00;
+}
+
+.ticket-estado.finalizado {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.ticket-body {
+  padding: 1rem;
+}
+
+.ticket-body p {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.prioridad {
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.prioridad.alta {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+.prioridad.media {
+  background-color: #fff8e1;
+  color: #ff8f00;
+}
+
+.prioridad.baja {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.controles-ticket {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.btn-asignar, .btn-finalizar, .btn-proceso, .btn-detalles {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.btn-asignar {
+  background-color: var(--primary-color);
+}
+
+.btn-finalizar {
+  background-color: var(--success);
+}
+
+.btn-proceso {
+  background-color: var(--warning);
+  color: var(--secondary-color);
+}
+
+.btn-detalles {
+  background-color: var(--secondary-color);
+}
+
+/* Modal de detalles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal-contenido {
+  background-color: var(--white);
+  border-radius: var(--border-radius);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 2rem;
+  position: relative;
+}
+
+.cerrar {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--dark-gray);
+  transition: var(--transition);
+}
+
+.cerrar:hover {
+  color: var(--danger);
+}
+
+.detalles-ticket {
+  margin-top: 1.5rem;
+}
+
+.historial-ticket {
+  margin-top: 1rem;
+  border: 1px solid var(--gray);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.entrada-historial {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--gray);
+}
+
+.entrada-historial:last-child {
+  border-bottom: none;
+}
+
+/* Mensajes de notificación */
+.mensaje {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  border-radius: var(--border-radius);
+  color: var(--white);
+  font-weight: 600;
+  box-shadow: var(--box-shadow);
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all 0.3s ease;
+}
+
+.mensaje.mostrar {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.mensaje.success {
+  background-color: var(--success);
+}
+
+.mensaje.error {
+  background-color: var(--danger);
+}
+
+.mensaje.info {
+  background-color: var(--info);
+}
+
+/* Mensaje informativo */
+.mensaje-info {
+  text-align: center;
+  padding: 1rem;
+  color: var(--dark-gray);
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .app-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .user-info {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .tickets-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .info-dinamica {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}

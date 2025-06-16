@@ -14,8 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const urgencySelect = document.getElementById("urgency");
   const priorityValue = document.getElementById("priorityValue");
   const slaValue = document.getElementById("slaValue");
-  
-  const ticketCategory = document.getElementById("ticketCategory");
   const ticketService = document.getElementById("ticketService");
   const ticketType = document.getElementById("ticketType");
 
@@ -95,59 +93,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  ticketCategory.addEventListener("change", () => {
-    const categoria = ticketCategory.value;
-    const servicios = Object.keys(serviciosPorCategoria[categoria]?.tipos || {});
-
-    // Limpiar servicios anteriores
-    ticketService.innerHTML = '<option value="" disabled selected>Selecciona un servicio</option>';
-
-    // Agregar nuevos
-    servicios.forEach(servicio => {
-      const option = document.createElement("option");
-      option.value = servicio;
-      option.textContent = servicio;
-      ticketService.appendChild(option);
-    });
-
-    updatePriorityAndSLA(); // si también quieres que se actualice prioridad y SLA
-  });
-
-  ticketService.addEventListener("change", () => {
-    const servicio = ticketService.value;
-    const tipos = Object.keys(serviciosPorCategoria[servicio]?.tipos || {});
-
-    // Limpiar tipos anteriores
-    ticketType.innerHTML = '<option value="" disabled selected>Selecciona el tipo de servicio</option>';
-
-    // Agregar nuevos tipos
-    tipos.forEach(tipo => {
-      const option = document.createElement("option");
-      option.value = tipo;
-      option.textContent = tipo;
-      ticketType.appendChild(option);
-    });
-
-    // Limpiar valores de impacto y urgencia
-    document.getElementById("impact").value = "";
-    document.getElementById("urgency").value = "";
-    updatePriorityAndSLA();
-  });
-
-  ticketType.addEventListener("change", () => {
-    const servicio = ticketService.value;
-    const tipo = ticketType.value;
-    
-    if (servicio && tipo) {
-      const info = serviciosPorCategoria[servicio].tipos[tipo];
-      if (info) {
-        document.getElementById("impact").value = info.impacto;
-        document.getElementById("urgency").value = info.urgencia;
-        updatePriorityAndSLA();
-      }
-    }
-  });
-
   // Cargar datos desde localStorage si existen
   let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
   let tickets = JSON.parse(localStorage.getItem("tickets")) || [];
@@ -161,11 +106,9 @@ document.addEventListener("DOMContentLoaded", () => {
   loginForm.addEventListener("submit", handleLogin);
   logoutButton.addEventListener("click", handleLogout);
   ticketForm.addEventListener("submit", createTicket);
+  ticketService.addEventListener("change", handleServiceChange);
+  ticketType.addEventListener("change", handleTypeChange);
   
-  // Eventos para actualizar dinámicamente prioridad y SLA
-  ticketCategory.addEventListener("change", updatePriorityAndSLA);
-
-
   // Funciones principales
   function handleLogin(e) {
     e.preventDefault();
@@ -270,6 +213,41 @@ document.addEventListener("DOMContentLoaded", () => {
     slaValue.textContent = "N/A";
     
     mostrarMensaje(`Ticket #${nuevoTicket.id} creado exitosamente`, "success");
+  }
+
+  function handleServiceChange() {
+    const servicio = ticketService.value;
+    const tipos = Object.keys(serviciosPorCategoria[servicio]?.tipos || {});
+
+    // Limpiar tipos anteriores
+    ticketType.innerHTML = '<option value="" disabled selected>Selecciona el tipo de servicio</option>';
+
+    // Agregar nuevos tipos
+    tipos.forEach(tipo => {
+      const option = document.createElement("option");
+      option.value = tipo;
+      option.textContent = tipo;
+      ticketType.appendChild(option);
+    });
+
+    // Limpiar valores de impacto y urgencia
+    document.getElementById("impact").value = "";
+    document.getElementById("urgency").value = "";
+    updatePriorityAndSLA();
+  }
+
+  function handleTypeChange() {
+    const servicio = ticketService.value;
+    const tipo = ticketType.value;
+    
+    if (servicio && tipo) {
+      const info = serviciosPorCategoria[servicio].tipos[tipo];
+      if (info) {
+        document.getElementById("impact").value = info.impacto;
+        document.getElementById("urgency").value = info.urgencia;
+        updatePriorityAndSLA();
+      }
+    }
   }
 
   function updatePriorityAndSLA() {

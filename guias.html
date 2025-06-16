@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Base de Conocimiento</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  
+  <style>
+    :root {
+      --primary-color: #3498db;
+      --primary-hover: #2980b9;
+      --secondary-color: #2c3e50;
+      --accent-color: #e74c3c;
+      --light-bg: #f0f4f8;
+      --white: #ffffff;
+      --gray: #bdc3c7;
+      --dark-gray: #7f8c8d;
+      --success: #27ae60;
+      --warning: #f39c12;
+      --danger: #e74c3c;
+      --info: #3498db;
+      --border-radius: 6px;
+      --box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      background-color: var(--light-bg);
+      color: var(--secondary-color);
+      margin: 0;
+    }
+
+    /* NAV */
+    nav {
+      background-color: var(--secondary-color);
+      padding: 1rem 2rem;
+      box-shadow: var(--box-shadow);
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 2rem;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav ul li a {
+      color: var(--white);
+      font-weight: 600;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    nav ul li a:hover {
+      color: var(--primary-color);
+    }
+
+    /* ENCABEZADO */
+    .guias-header {
+      text-align: center;
+      margin: 2rem auto 1rem;
+      padding: 0 1rem;
+    }
+
+    .guias-header h1 {
+      color: var(--primary-color);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .guias-header p {
+      color: var(--dark-gray);
+      font-size: 1rem;
+    }
+
+    /* CONTENIDO */
+    .guias-contenido {
+      max-width: 900px;
+      margin: auto;
+      padding: 2rem 1rem;
+    }
+
+    .articulo {
+      background-color: var(--white);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+    }
+
+    .articulo:hover {
+      transform: translateY(-4px);
+    }
+
+    .articulo h2 {
+      margin-top: 0;
+      color: var(--secondary-color);
+    }
+
+    .meta {
+      color: var(--dark-gray);
+      font-size: 0.85rem;
+      margin-bottom: 1rem;
+    }
+
+    .articulo p {
+      margin-bottom: 0.8rem;
+    }
+
+    .articulo img {
+      margin-top: 1rem;
+      max-width: 100%;
+      border-radius: var(--border-radius);
+    }
+
+    .etiquetas {
+      background-color: var(--primary-color);
+      color: var(--white);
+      display: inline-block;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+      border-radius: var(--border-radius);
+    }
+
+    .articulo.despublicado {
+      opacity: 0.6;
+      border-left: 5px solid var(--danger);
+    }
+
+    footer.guias-footer {
+      text-align: center;
+      padding: 1rem;
+      background-color: var(--secondary-color);
+      color: var(--white);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navegación -->
+  <nav>
+    <ul>
+      <li><a href="index.html">Inicio</a></li>
+      <li><a href="guias.html">Guías</a></li>
+      <li><a href="#">Contacto</a></li>
+    </ul>
+  </nav>
+
+  <!-- Encabezado -->
+  <header class="guias-header">
+    <h1><i class="fas fa-book"></i> Base de Conocimiento</h1>
+    <p>Encuentra guías prácticas sobre los servicios tecnológicos de la universidad.</p>
+  </header>
+
+  <!-- Artículos -->
+  <main class="guias-contenido">
+    <div class="articulo">
+      <h2>Cómo configurar impresoras en red</h2>
+      <p class="meta">Publicado por <strong>Ana Torres</strong> el <em>12/06/2025</em></p>
+      <p>Este artículo te guía paso a paso para conectar una impresora a la red institucional. Puedes descargar la guía <a href="guias/manual de impresoras.pdf">aquí</a>.</p>
+     
+    </div>
+  <main class="guias-contenido">
+    <div class="articulo">
+      <h2>Cómo configurar impresoras en red</h2>
+      <p class="meta">Publicado por <strong>Ana Torres</strong> el <em>12/06/2025</em></p>
+      <p>Este artículo te guía paso a paso para conectar una impresora a la red institucional. Puedes descargar la guía <a href="guias/manual de impresoras.pdf">aquí</a>.</p>
+      
+    </div>
+    
+
+  <!-- Footer -->
+  <footer class="guias-footer">
+    <p>&copy; 2025 Universidad de Talca - Mesa de Ayuda</p>
+  </footer>
+
+</body>
+</html>

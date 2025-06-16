@@ -545,3 +545,26 @@ button i {
     gap: 1rem;
   }
 }
+/* Navegación principal */
+nav {
+  background-color: var(--secondary-color); /* gris oscuro */
+  padding: 1rem 2rem;
+  box-shadow: var(--box-shadow);
+}
+
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 2rem;
+}
+
+nav ul li a {
+  color: var(--white);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: var(--transition);
+}
+
+nav ul li a:hover {
+  color: var(--primary-color); /* azul principal */
+}

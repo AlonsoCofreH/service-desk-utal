@@ -93,9 +93,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Cargar datos desde localStorage si existen
+  // Eliminar la carga desde localStorage
   let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
-  let tickets = JSON.parse(localStorage.getItem("tickets")) || [];
+  // Ya no necesitamos cargar tickets desde localStorage
+  // let tickets = JSON.parse(localStorage.getItem("tickets")) || [];
 
   // Si hay un usuario en localStorage, iniciar sesión automáticamente
   if (currentUser) {
@@ -242,30 +243,49 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function createTicket(e) {
+  async function createTicket(e) {
     e.preventDefault();
+    
+    console.log("Iniciando creación de ticket...");
+    console.log("Usuario actual:", currentUser);
     
     const servicio = document.getElementById("ticketService").value;
     const tipoServicio = document.getElementById("ticketType").value;
     const descripcion = document.getElementById("ticketDescription").value;
     
+    console.log("Datos del formulario:", {
+      servicio,
+      tipoServicio,
+      descripcion
+    });
+    
     if (!servicio || !tipoServicio || !descripcion) {
+      console.log("Error: Campos incompletos");
       mostrarMensaje("Por favor, complete todos los campos del ticket", "error");
       return;
     }
 
     const info = serviciosPorCategoria[servicio].tipos[tipoServicio];
+    console.log("Información del servicio:", info);
+    
     const impacto = info.impacto;
     const urgencia = info.urgencia;
     const tipo = info.tipo;
     
     const prioridad = calcularPrioridad(impacto, urgencia);
     const sla = obtenerSLA(servicio, tipoServicio);
-    const fechaCreacion = new Date().toLocaleString();
     const fechaLimite = calcularFechaLimite(sla);
 
+    console.log("Cálculos realizados:", {
+      impacto,
+      urgencia,
+      tipo,
+      prioridad,
+      sla,
+      fechaLimite
+    });
+
     const nuevoTicket = {
-      id: Date.now(),
       tipo,
       servicio,
       tipoServicio,
@@ -274,29 +294,32 @@ document.addEventListener("DOMContentLoaded", () => {
       urgencia,
       prioridad,
       sla,
-      estado: "Abierto",
-      fechaCreacion,
-      fechaLimite,
-      asignadoA: null,
-      creadoPor: currentUser.email,
-      historial: [{
-        fecha: fechaCreacion,
-        accion: "Ticket creado",
-        usuario: currentUser.email
-      }]
+      creadoPor: currentUser.email
     };
 
-    tickets.push(nuevoTicket);
-    
-    // Guardar en localStorage
-    localStorage.setItem("tickets", JSON.stringify(tickets));
-    
-    mostrarTickets();
-    ticketForm.reset();
-    priorityValue.textContent = "N/A";
-    slaValue.textContent = "N/A";
-    
-    mostrarMensaje(`Ticket #${nuevoTicket.id} creado exitosamente`, "success");
+    console.log("Ticket a crear:", nuevoTicket);
+
+    try {
+      console.log("Intentando crear ticket en Firebase...");
+      const resultado = await crearTicketEnFirebase(nuevoTicket);
+      console.log("Resultado de creación:", resultado);
+      
+      if (resultado.exito) {
+        console.log("Ticket creado exitosamente");
+        mostrarTickets();
+        ticketForm.reset();
+        priorityValue.textContent = "N/A";
+        slaValue.textContent = "N/A";
+        mostrarMensaje(`Ticket creado exitosamente`, "success");
+      } else {
+        console.log("Error al crear ticket:", resultado.mensaje);
+        mostrarMensaje(resultado.mensaje, "error");
+      }
+    } catch (error) {
+      console.error("Error detallado al crear ticket:", error);
+      console.error("Stack trace:", error.stack);
+      mostrarMensaje("Error al crear el ticket", "error");
+    }
   }
 
   function handleServiceChange() {
@@ -398,52 +421,67 @@ document.addEventListener("DOMContentLoaded", () => {
     return fechaLimite.toLocaleString();
   }
 
-  function mostrarTickets() {
+  async function mostrarTickets() {
     ticketList.innerHTML = "";
     
-    const misTickets = tickets.filter(t => t.creadoPor === currentUser.email);
-    
-    if (misTickets.length === 0) {
-      ticketList.innerHTML = '<p class="mensaje-info">No tienes tickets creados.</p>';
-      return;
+    try {
+      const misTickets = await obtenerTicketsUsuario(currentUser.email);
+      
+      if (misTickets.length === 0) {
+        ticketList.innerHTML = '<p class="mensaje-info">No tienes tickets creados.</p>';
+        return;
+      }
+      
+      misTickets.forEach(ticket => {
+        const div = crearElementoTicket(ticket, "usuario");
+        ticketList.appendChild(div);
+      });
+    } catch (error) {
+      console.error("Error al mostrar tickets:", error);
+      mostrarMensaje("Error al cargar los tickets", "error");
     }
-    
-    misTickets.forEach(ticket => {
-      const div = crearElementoTicket(ticket, "usuario");
-      ticketList.appendChild(div);
-    });
   }
 
-  function mostrarTicketsSinAsignar() {
+  async function mostrarTicketsSinAsignar() {
     unassignedTickets.innerHTML = "";
     
-    const ticketsSinAsignar = tickets.filter(t => t.asignadoA === null);
-    
-    if (ticketsSinAsignar.length === 0) {
-      unassignedTickets.innerHTML = '<p class="mensaje-info">No hay tickets sin asignar.</p>';
-      return;
+    try {
+      const ticketsSinAsignar = await obtenerTicketsSinAsignar();
+      
+      if (ticketsSinAsignar.length === 0) {
+        unassignedTickets.innerHTML = '<p class="mensaje-info">No hay tickets sin asignar.</p>';
+        return;
+      }
+      
+      ticketsSinAsignar.forEach(ticket => {
+        const div = crearElementoTicket(ticket, "agente-sinasignar");
+        unassignedTickets.appendChild(div);
+      });
+    } catch (error) {
+      console.error("Error al mostrar tickets sin asignar:", error);
+      mostrarMensaje("Error al cargar los tickets sin asignar", "error");
     }
-    
-    ticketsSinAsignar.forEach(ticket => {
-      const div = crearElementoTicket(ticket, "agente-sinasignar");
-      unassignedTickets.appendChild(div);
-    });
   }
 
-  function mostrarTicketsAsignados() {
+  async function mostrarTicketsAsignados() {
     ticketList.innerHTML = "";
     
-    const ticketsAsignados = tickets.filter(t => t.asignadoA === currentUser.email);
-    
-    if (ticketsAsignados.length === 0) {
-      ticketList.innerHTML = '<p class="mensaje-info">No tienes tickets asignados.</p>';
-      return;
+    try {
+      const ticketsAsignados = await obtenerTicketsAsignados(currentUser.email);
+      
+      if (ticketsAsignados.length === 0) {
+        ticketList.innerHTML = '<p class="mensaje-info">No tienes tickets asignados.</p>';
+        return;
+      }
+      
+      ticketsAsignados.forEach(ticket => {
+        const div = crearElementoTicket(ticket, "agente-asignado");
+        ticketList.appendChild(div);
+      });
+    } catch (error) {
+      console.error("Error al mostrar tickets asignados:", error);
+      mostrarMensaje("Error al cargar los tickets asignados", "error");
     }
-    
-    ticketsAsignados.forEach(ticket => {
-      const div = crearElementoTicket(ticket, "agente-asignado");
-      ticketList.appendChild(div);
-    });
   }
 
   function crearElementoTicket(ticket, tipo) {
@@ -498,48 +536,52 @@ document.addEventListener("DOMContentLoaded", () => {
     return div;
   }
 
-  // Funciones globales (window) para los botones
-  window.asignarTicket = function(ticketId) {
-    const ticket = tickets.find(t => t.id === ticketId);
-    
-    if (ticket && currentUser.role === "agente") {
-      ticket.asignadoA = currentUser.email;
-      ticket.estado = "En proceso";
-      
-      // Registrar en historial
-      ticket.historial.push({
-        fecha: new Date().toLocaleString(),
-        accion: "Ticket asignado",
-        usuario: currentUser.email
+  // Modificar las funciones de asignación y cambio de estado
+  window.asignarTicket = async function(ticketId) {
+    try {
+      const resultado = await actualizarTicketEnFirebase(ticketId, {
+        asignadoA: currentUser.email,
+        estado: "En proceso",
+        historial: firebase.firestore.FieldValue.arrayUnion({
+          fecha: new Date().toLocaleString(),
+          accion: "Ticket asignado",
+          usuario: currentUser.email
+        })
       });
-      
-      // Actualizar localStorage
-      localStorage.setItem("tickets", JSON.stringify(tickets));
-      
-      mostrarTicketsSinAsignar();
-      mostrarTicketsAsignados();
-      mostrarMensaje(`El ticket #${ticketId} ha sido asignado a ti.`, "success");
+
+      if (resultado.exito) {
+        mostrarTicketsSinAsignar();
+        mostrarTicketsAsignados();
+        mostrarMensaje(`El ticket #${ticketId} ha sido asignado a ti.`, "success");
+      } else {
+        mostrarMensaje(resultado.mensaje, "error");
+      }
+    } catch (error) {
+      console.error("Error al asignar ticket:", error);
+      mostrarMensaje("Error al asignar el ticket", "error");
     }
   };
 
-  window.cambiarEstado = function(ticketId, nuevoEstado) {
-    const ticket = tickets.find(t => t.id === ticketId);
-    
-    if (ticket && ticket.asignadoA === currentUser.email) {
-      ticket.estado = nuevoEstado;
-      
-      // Registrar en historial
-      ticket.historial.push({
-        fecha: new Date().toLocaleString(),
-        accion: `Ticket marcado como ${nuevoEstado}`,
-        usuario: currentUser.email
+  window.cambiarEstado = async function(ticketId, nuevoEstado) {
+    try {
+      const resultado = await actualizarTicketEnFirebase(ticketId, {
+        estado: nuevoEstado,
+        historial: firebase.firestore.FieldValue.arrayUnion({
+          fecha: new Date().toLocaleString(),
+          accion: `Ticket marcado como ${nuevoEstado}`,
+          usuario: currentUser.email
+        })
       });
-      
-      // Actualizar localStorage
-      localStorage.setItem("tickets", JSON.stringify(tickets));
-      
-      mostrarTicketsAsignados();
-      mostrarMensaje(`El ticket #${ticketId} ha sido marcado como ${nuevoEstado}.`, "success");
+
+      if (resultado.exito) {
+        mostrarTicketsAsignados();
+        mostrarMensaje(`El ticket #${ticketId} ha sido marcado como ${nuevoEstado}.`, "success");
+      } else {
+        mostrarMensaje(resultado.mensaje, "error");
+      }
+    } catch (error) {
+      console.error("Error al cambiar estado:", error);
+      mostrarMensaje("Error al cambiar el estado del ticket", "error");
     }
   };
 

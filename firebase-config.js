@@ -78,28 +78,36 @@ async function registrarUsuarioAutorizado(email, rol) {
 // Funciones para manejar tickets
 async function crearTicketEnFirebase(ticket) {
   try {
+    console.log("Iniciando creación de ticket en Firebase...");
+    console.log("Datos recibidos:", ticket);
+    
+    // Crear el timestamp actual
+    const ahora = new Date();
+    
     const docRef = await ticketsCollection.add({
       ...ticket,
       fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
-      fechaLimite: ticket.fechaLimite,
       estado: "Abierto",
       asignadoA: null,
       historial: [{
-        fecha: new Date().toLocaleString(),
+        fecha: firebase.firestore.Timestamp.fromDate(ahora),
         accion: "Ticket creado",
         usuario: ticket.creadoPor
       }]
     });
+    
+    console.log("Ticket creado con ID:", docRef.id);
     return {
       exito: true,
       id: docRef.id,
       mensaje: "Ticket creado exitosamente"
     };
   } catch (error) {
-    console.error("Error al crear ticket:", error);
+    console.error("Error detallado en crearTicketEnFirebase:", error);
+    console.error("Stack trace:", error.stack);
     return {
       exito: false,
-      mensaje: "Error al crear el ticket"
+      mensaje: "Error al crear el ticket: " + error.message
     };
   }
 }

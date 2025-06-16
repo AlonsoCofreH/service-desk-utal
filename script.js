@@ -274,7 +274,11 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const prioridad = calcularPrioridad(impacto, urgencia);
     const sla = obtenerSLA(servicio, tipoServicio);
-    const fechaLimite = calcularFechaLimite(sla);
+    
+    // Calcular la fecha límite como timestamp
+    const horasSLA = parseInt(sla.split(' ')[0]);
+    const fechaLimite = new Date();
+    fechaLimite.setHours(fechaLimite.getHours() + horasSLA);
 
     console.log("Cálculos realizados:", {
       impacto,
@@ -282,7 +286,7 @@ document.addEventListener("DOMContentLoaded", () => {
       tipo,
       prioridad,
       sla,
-      fechaLimite
+      fechaLimite: fechaLimite.toISOString()
     });
 
     const nuevoTicket = {
@@ -294,6 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
       urgencia,
       prioridad,
       sla,
+      fechaLimite: firebase.firestore.Timestamp.fromDate(fechaLimite),
       creadoPor: currentUser.email
     };
 
@@ -539,11 +544,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Modificar las funciones de asignación y cambio de estado
   window.asignarTicket = async function(ticketId) {
     try {
+      const ahora = new Date();
       const resultado = await actualizarTicketEnFirebase(ticketId, {
         asignadoA: currentUser.email,
         estado: "En proceso",
         historial: firebase.firestore.FieldValue.arrayUnion({
-          fecha: new Date().toLocaleString(),
+          fecha: firebase.firestore.Timestamp.fromDate(ahora),
           accion: "Ticket asignado",
           usuario: currentUser.email
         })
@@ -564,10 +570,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.cambiarEstado = async function(ticketId, nuevoEstado) {
     try {
+      const ahora = new Date();
       const resultado = await actualizarTicketEnFirebase(ticketId, {
         estado: nuevoEstado,
         historial: firebase.firestore.FieldValue.arrayUnion({
-          fecha: new Date().toLocaleString(),
+          fecha: firebase.firestore.Timestamp.fromDate(ahora),
           accion: `Ticket marcado como ${nuevoEstado}`,
           usuario: currentUser.email
         })

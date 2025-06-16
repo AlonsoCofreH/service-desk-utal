@@ -506,32 +506,110 @@ document.addEventListener("DOMContentLoaded", () => {
   // Función auxiliar para formatear fechas
   function formatearFecha(timestamp) {
     if (!timestamp) return 'N/A';
-    const fecha = timestamp.toDate();
-    return fecha.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    
+    try {
+      // Si es un timestamp de Firestore
+      if (timestamp && typeof timestamp.toDate === 'function') {
+        const fecha = timestamp.toDate();
+        return fecha.toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+      
+      // Si es un timestamp normal (número)
+      if (typeof timestamp === 'number') {
+        const fecha = new Date(timestamp);
+        return fecha.toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+      
+      // Si es una fecha (Date)
+      if (timestamp instanceof Date) {
+        return timestamp.toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      // Si es un string de fecha
+      if (typeof timestamp === 'string') {
+        const fecha = new Date(timestamp);
+        if (!isNaN(fecha.getTime())) {
+          return fecha.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+      }
+
+      console.warn('Formato de fecha no reconocido:', timestamp);
+      return 'Fecha no válida';
+    } catch (error) {
+      console.error('Error al formatear fecha:', error);
+      return 'Error en fecha';
+    }
   }
 
   // Función para calcular tiempo restante
   function calcularTiempoRestante(fechaLimite) {
     if (!fechaLimite) return 'N/A';
-    const ahora = new Date();
-    const limite = fechaLimite.toDate();
-    const diferencia = limite - ahora;
     
-    if (diferencia < 0) return 'Vencido';
-    
-    const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
-    const horas = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (dias > 0) return `${dias}d ${horas}h restantes`;
-    if (horas > 0) return `${horas}h ${minutos}m restantes`;
-    return `${minutos}m restantes`;
+    try {
+      let fechaLimiteDate;
+      
+      // Si es un timestamp de Firestore
+      if (fechaLimite && typeof fechaLimite.toDate === 'function') {
+        fechaLimiteDate = fechaLimite.toDate();
+      }
+      // Si es un timestamp normal (número)
+      else if (typeof fechaLimite === 'number') {
+        fechaLimiteDate = new Date(fechaLimite);
+      }
+      // Si es una fecha (Date)
+      else if (fechaLimite instanceof Date) {
+        fechaLimiteDate = fechaLimite;
+      }
+      // Si es un string de fecha
+      else if (typeof fechaLimite === 'string') {
+        fechaLimiteDate = new Date(fechaLimite);
+      }
+      
+      if (!fechaLimiteDate || isNaN(fechaLimiteDate.getTime())) {
+        console.warn('Fecha límite no válida:', fechaLimite);
+        return 'Fecha no válida';
+      }
+
+      const ahora = new Date();
+      const diferencia = fechaLimiteDate - ahora;
+      
+      if (diferencia < 0) return 'Vencido';
+      
+      const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+      const horas = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (dias > 0) return `${dias}d ${horas}h restantes`;
+      if (horas > 0) return `${horas}h ${minutos}m restantes`;
+      return `${minutos}m restantes`;
+    } catch (error) {
+      console.error('Error al calcular tiempo restante:', error);
+      return 'Error en cálculo';
+    }
   }
 
   function crearElementoTicket(ticket, tipo) {

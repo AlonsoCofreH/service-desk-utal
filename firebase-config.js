@@ -2,12 +2,13 @@
 const firebaseConfig = {
   // Aquí irán tus credenciales de Firebase
   // Las obtendrás al crear un proyecto en Firebase Console
-  apiKey: "TU_API_KEY",
-  authDomain: "tu-proyecto.firebaseapp.com",
-  projectId: "tu-proyecto",
-  storageBucket: "tu-proyecto.appspot.com",
-  messagingSenderId: "tu-messaging-sender-id",
-  appId: "tu-app-id"
+  apiKey: "AIzaSyDJskEsYxYnmUqbFSi_3nTs28SI43-OFB0",
+  authDomain: "service-desk-utal.firebaseapp.com",
+  projectId: "service-desk-utal",
+  storageBucket: "service-desk-utal.firebasestorage.app",
+  messagingSenderId: "645284310843",
+  appId: "1:645284310843:web:d1bb90989ba46ee296d11e",
+  measurementId: "G-HYNK57GS0T"
 };
 
 // Inicializar Firebase

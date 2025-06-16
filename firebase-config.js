@@ -24,13 +24,16 @@ const usuariosAutorizados = db.collection('usuariosAutorizados');
 // Función para verificar si un correo está autorizado
 async function verificarUsuarioAutorizado(email) {
   try {
-    const doc = await usuariosAutorizados.doc(email).get();
-    if (doc.exists) {
+    const querySnapshot = await usuariosAutorizados.where('email', '==', email).get();
+    
+    if (!querySnapshot.empty) {
+      const doc = querySnapshot.docs[0];
       return {
         autorizado: true,
         rol: doc.data().rol
       };
     }
+    
     return {
       autorizado: false,
       mensaje: "Este correo no está autorizado para usar el sistema"

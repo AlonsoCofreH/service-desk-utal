@@ -520,8 +520,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <p><strong>Descripción:</strong> ${ticket.descripcion}</p>
         <p><strong>Prioridad:</strong> <span class="prioridad ${ticket.prioridad.toLowerCase()}">${ticket.prioridad}</span></p>
         <p><strong>SLA:</strong> ${ticket.sla}</p>
-        <p><strong>Fecha creación:</strong> ${ticket.fechaCreacion}</p>
-        <p><strong>Fecha límite:</strong> ${ticket.fechaLimite}</p>
+        <p><strong>Fecha creación:</strong> ${ticket.fechaCreacion?.toLocaleString() || 'N/A'}</p>
+        <p><strong>Fecha límite:</strong> ${ticket.fechaLimite?.toLocaleString() || 'N/A'}</p>
     `;
     
     // Añadir información específica según el tipo de usuario
@@ -529,22 +529,22 @@ document.addEventListener("DOMContentLoaded", () => {
       contenido += `
         <p><strong>Estado:</strong> ${ticket.estado}</p>
         ${ticket.asignadoA ? `<p><strong>Asignado a:</strong> ${ticket.asignadoA}</p>` : ''}
-        <button class="btn-detalles" onclick="verDetalles(${ticket.id})">Ver detalles</button>
+        <button class="btn-detalles" onclick="verDetalles('${ticket.id}')">Ver detalles</button>
       `;
     } else if (tipo === "agente-sinasignar") {
       contenido += `
         <p><strong>Creado por:</strong> ${ticket.creadoPor}</p>
-        <button class="btn-asignar" onclick="asignarTicket(${ticket.id})">Asignarme este ticket</button>
+        <button class="btn-asignar" onclick="asignarTicket('${ticket.id}')">Asignarme este ticket</button>
       `;
     } else if (tipo === "agente-asignado") {
       contenido += `
         <p><strong>Creado por:</strong> ${ticket.creadoPor}</p>
         <div class="controles-ticket">
           ${ticket.estado !== "Finalizado" ? 
-            `<button class="btn-finalizar" onclick="cambiarEstado(${ticket.id}, 'Finalizado')">Finalizar Ticket</button>` : ''}
+            `<button class="btn-finalizar" onclick="cambiarEstado('${ticket.id}', 'Finalizado')">Finalizar Ticket</button>` : ''}
           ${ticket.estado !== "En proceso" && ticket.estado !== "Finalizado" ? 
-            `<button class="btn-proceso" onclick="cambiarEstado(${ticket.id}, 'En proceso')">Marcar En Proceso</button>` : ''}
-          <button class="btn-detalles" onclick="verDetalles(${ticket.id})">Ver detalles</button>
+            `<button class="btn-proceso" onclick="cambiarEstado('${ticket.id}', 'En proceso')">Marcar En Proceso</button>` : ''}
+          <button class="btn-detalles" onclick="verDetalles('${ticket.id}')">Ver detalles</button>
         </div>
       `;
     }
@@ -558,7 +558,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Modificar las funciones de asignación y cambio de estado
   window.asignarTicket = async function(ticketId) {
     try {
+      console.log("Intentando asignar ticket:", ticketId);
       const ahora = new Date();
+      
       const resultado = await actualizarTicketEnFirebase(ticketId, {
         asignadoA: currentUser.email,
         estado: "En proceso",
@@ -569,9 +571,13 @@ document.addEventListener("DOMContentLoaded", () => {
         })
       });
 
+      console.log("Resultado de asignación:", resultado);
+
       if (resultado.exito) {
-        mostrarTicketsSinAsignar();
-        mostrarTicketsAsignados();
+        await Promise.all([
+          mostrarTicketsSinAsignar(),
+          mostrarTicketsAsignados()
+        ]);
         mostrarMensaje(`El ticket #${ticketId} ha sido asignado a ti.`, "success");
       } else {
         mostrarMensaje(resultado.mensaje, "error");
@@ -584,7 +590,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   window.cambiarEstado = async function(ticketId, nuevoEstado) {
     try {
+      console.log("Intentando cambiar estado del ticket:", ticketId, "a:", nuevoEstado);
       const ahora = new Date();
+      
       const resultado = await actualizarTicketEnFirebase(ticketId, {
         estado: nuevoEstado,
         historial: firebase.firestore.FieldValue.arrayUnion({
@@ -594,8 +602,10 @@ document.addEventListener("DOMContentLoaded", () => {
         })
       });
 
+      console.log("Resultado de cambio de estado:", resultado);
+
       if (resultado.exito) {
-        mostrarTicketsAsignados();
+        await mostrarTicketsAsignados();
         mostrarMensaje(`El ticket #${ticketId} ha sido marcado como ${nuevoEstado}.`, "success");
       } else {
         mostrarMensaje(resultado.mensaje, "error");

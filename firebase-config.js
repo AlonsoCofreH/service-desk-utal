@@ -114,16 +114,34 @@ async function crearTicketEnFirebase(ticket) {
 
 async function actualizarTicketEnFirebase(ticketId, datos) {
   try {
-    await ticketsCollection.doc(ticketId).update(datos);
+    console.log("Actualizando ticket en Firestore:", { ticketId, datos });
+    
+    // Verificar que el ticket existe
+    const ticketRef = ticketsCollection.doc(ticketId);
+    const ticketDoc = await ticketRef.get();
+    
+    if (!ticketDoc.exists) {
+      console.error("El ticket no existe:", ticketId);
+      return {
+        exito: false,
+        mensaje: "El ticket no existe"
+      };
+    }
+
+    // Actualizar el ticket
+    await ticketRef.update(datos);
+    console.log("Ticket actualizado exitosamente");
+    
     return {
       exito: true,
       mensaje: "Ticket actualizado exitosamente"
     };
   } catch (error) {
-    console.error("Error al actualizar ticket:", error);
+    console.error("Error detallado al actualizar ticket:", error);
+    console.error("Stack trace:", error.stack);
     return {
       exito: false,
-      mensaje: "Error al actualizar el ticket"
+      mensaje: "Error al actualizar el ticket: " + error.message
     };
   }
 }

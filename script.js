@@ -93,9 +93,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Cargar datos desde localStorage si existen
+  // Eliminar la carga desde localStorage
   let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
-  let tickets = JSON.parse(localStorage.getItem("tickets")) || [];
+  // Ya no necesitamos cargar tickets desde localStorage
+  // let tickets = JSON.parse(localStorage.getItem("tickets")) || [];
 
   // Si hay un usuario en localStorage, iniciar sesión automáticamente
   if (currentUser) {
@@ -110,78 +111,193 @@ document.addEventListener("DOMContentLoaded", () => {
   ticketType.addEventListener("change", handleTypeChange);
   
   // Funciones principales
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
     
     // Validar el formulario
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-    const role = document.getElementById("role").value;
     
-    if (!email || !password || !role) {
+    if (!email || !password) {
       mostrarMensaje("Por favor, complete todos los campos", "error");
       return;
     }
-    
-    // En un sistema real, aquí se verificaría contra una base de datos
-    // Por ahora, simulamos una autenticación exitosa
-    currentUser = { email, role };
-    
-    // Guardar en localStorage
-    localStorage.setItem("currentUser", JSON.stringify(currentUser));
-    
-    iniciarSesion(currentUser);
+
+    try {
+      // Verificar si el usuario está autorizado
+      const verificacion = await verificarUsuarioAutorizado(email);
+      
+      if (!verificacion.autorizado) {
+        mostrarMensaje(verificacion.mensaje, "error");
+        return;
+      }
+
+      // Intentar iniciar sesión con Firebase
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+
+      // Guardar información del usuario
+      currentUser = {
+        email: user.email,
+        role: verificacion.rol
+      };
+      
+      // Guardar en localStorage
+      localStorage.setItem("currentUser", JSON.stringify(currentUser));
+      
+      iniciarSesion(currentUser);
+      mostrarMensaje("Inicio de sesión exitoso", "success");
+    } catch (error) {
+      console.error("Error de autenticación:", error);
+      
+      // Manejar errores específicos
+      let mensaje = "Error al iniciar sesión";
+      if (error.code === 'auth/user-not-found') {
+        mensaje = "El usuario no existe";
+      } else if (error.code === 'auth/wrong-password') {
+        mensaje = "Contraseña incorrecta";
+      } else if (error.code === 'auth/invalid-email') {
+        mensaje = "Correo electrónico inválido";
+      }
+      
+      mostrarMensaje(mensaje, "error");
+    }
+  }
+
+  // Función para registrar un nuevo usuario (primera vez)
+  async function registrarPrimerUsuario(email, password, rol) {
+    try {
+      // Crear usuario en Firebase Auth
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+
+      // Registrar en la colección de usuarios autorizados
+      const resultado = await registrarUsuarioAutorizado(email, rol);
+      
+      if (resultado.exito) {
+        mostrarMensaje("Usuario registrado exitosamente", "success");
+        return true;
+      } else {
+        mostrarMensaje(resultado.mensaje, "error");
+        return false;
+      }
+    } catch (error) {
+      console.error("Error al registrar usuario:", error);
+      mostrarMensaje("Error al registrar el usuario", "error");
+      return false;
+    }
+  }
+
+  // Escuchar cambios en el estado de autenticación
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      // Usuario ha iniciado sesión
+      const verificacion = await verificarUsuarioAutorizado(user.email);
+      if (verificacion.autorizado) {
+        currentUser = {
+          email: user.email,
+          role: verificacion.rol
+        };
+        localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        iniciarSesion(currentUser);
+      } else {
+        // Si el usuario no está autorizado, cerrar sesión
+        await auth.signOut();
+        mostrarMensaje(verificacion.mensaje, "error");
+      }
+    } else {
+      // Usuario ha cerrado sesión
+      handleLogout();
+    }
+  });
+
+  async function handleLogout() {
+    try {
+      await auth.signOut();
+      currentUser = null;
+      localStorage.removeItem("currentUser");
+      loginScreen.style.display = "block";
+      appScreen.style.display = "none";
+      document.getElementById("loginForm").reset();
+      mostrarMensaje("Sesión cerrada exitosamente", "success");
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+      mostrarMensaje("Error al cerrar sesión", "error");
+    }
   }
 
   function iniciarSesion(user) {
+    console.log("Iniciando sesión como:", user);
     userNameSpan.textContent = user.email;
     loginScreen.style.display = "none";
     appScreen.style.display = "block";
 
     if (user.role === "agente") {
+      console.log("Configurando vista de agente");
       ticketFormContainer.style.display = "none";
       unassignedTicketsContainer.style.display = "block";
-      mostrarTicketsSinAsignar();
-      mostrarTicketsAsignados();
+      // Asegurarnos de que ambas funciones se ejecuten
+      Promise.all([
+        mostrarTicketsSinAsignar(),
+        mostrarTicketsAsignados()
+      ]).catch(error => {
+        console.error("Error al cargar tickets del agente:", error);
+      });
     } else {
+      console.log("Configurando vista de usuario");
       ticketFormContainer.style.display = "block";
       unassignedTicketsContainer.style.display = "none";
       mostrarTickets();
     }
   }
 
-  function handleLogout() {
-    currentUser = null;
-    localStorage.removeItem("currentUser");
-    loginScreen.style.display = "block";
-    appScreen.style.display = "none";
-    document.getElementById("loginForm").reset();
-  }
-
-  function createTicket(e) {
+  async function createTicket(e) {
     e.preventDefault();
+    
+    console.log("Iniciando creación de ticket...");
+    console.log("Usuario actual:", currentUser);
     
     const servicio = document.getElementById("ticketService").value;
     const tipoServicio = document.getElementById("ticketType").value;
     const descripcion = document.getElementById("ticketDescription").value;
     
+    console.log("Datos del formulario:", {
+      servicio,
+      tipoServicio,
+      descripcion
+    });
+    
     if (!servicio || !tipoServicio || !descripcion) {
+      console.log("Error: Campos incompletos");
       mostrarMensaje("Por favor, complete todos los campos del ticket", "error");
       return;
     }
 
     const info = serviciosPorCategoria[servicio].tipos[tipoServicio];
+    console.log("Información del servicio:", info);
+    
     const impacto = info.impacto;
     const urgencia = info.urgencia;
     const tipo = info.tipo;
     
     const prioridad = calcularPrioridad(impacto, urgencia);
     const sla = obtenerSLA(servicio, tipoServicio);
-    const fechaCreacion = new Date().toLocaleString();
-    const fechaLimite = calcularFechaLimite(sla);
+    
+    // Calcular la fecha límite como timestamp
+    const horasSLA = parseInt(sla.split(' ')[0]);
+    const fechaLimite = new Date();
+    fechaLimite.setHours(fechaLimite.getHours() + horasSLA);
+
+    console.log("Cálculos realizados:", {
+      impacto,
+      urgencia,
+      tipo,
+      prioridad,
+      sla,
+      fechaLimite: fechaLimite.toISOString()
+    });
 
     const nuevoTicket = {
-      id: Date.now(),
       tipo,
       servicio,
       tipoServicio,
@@ -190,29 +306,33 @@ document.addEventListener("DOMContentLoaded", () => {
       urgencia,
       prioridad,
       sla,
-      estado: "Abierto",
-      fechaCreacion,
-      fechaLimite,
-      asignadoA: null,
-      creadoPor: currentUser.email,
-      historial: [{
-        fecha: fechaCreacion,
-        accion: "Ticket creado",
-        usuario: currentUser.email
-      }]
+      fechaLimite: firebase.firestore.Timestamp.fromDate(fechaLimite),
+      creadoPor: currentUser.email
     };
 
-    tickets.push(nuevoTicket);
-    
-    // Guardar en localStorage
-    localStorage.setItem("tickets", JSON.stringify(tickets));
-    
-    mostrarTickets();
-    ticketForm.reset();
-    priorityValue.textContent = "N/A";
-    slaValue.textContent = "N/A";
-    
-    mostrarMensaje(`Ticket #${nuevoTicket.id} creado exitosamente`, "success");
+    console.log("Ticket a crear:", nuevoTicket);
+
+    try {
+      console.log("Intentando crear ticket en Firebase...");
+      const resultado = await crearTicketEnFirebase(nuevoTicket);
+      console.log("Resultado de creación:", resultado);
+      
+      if (resultado.exito) {
+        console.log("Ticket creado exitosamente");
+        mostrarTickets();
+        ticketForm.reset();
+        priorityValue.textContent = "N/A";
+        slaValue.textContent = "N/A";
+        mostrarMensaje(`Ticket creado exitosamente`, "success");
+      } else {
+        console.log("Error al crear ticket:", resultado.mensaje);
+        mostrarMensaje(resultado.mensaje, "error");
+      }
+    } catch (error) {
+      console.error("Error detallado al crear ticket:", error);
+      console.error("Stack trace:", error.stack);
+      mostrarMensaje("Error al crear el ticket", "error");
+    }
   }
 
   function handleServiceChange() {
@@ -314,58 +434,192 @@ document.addEventListener("DOMContentLoaded", () => {
     return fechaLimite.toLocaleString();
   }
 
-  function mostrarTickets() {
+  async function mostrarTickets() {
     ticketList.innerHTML = "";
     
-    const misTickets = tickets.filter(t => t.creadoPor === currentUser.email);
-    
-    if (misTickets.length === 0) {
-      ticketList.innerHTML = '<p class="mensaje-info">No tienes tickets creados.</p>';
-      return;
+    try {
+      const misTickets = await obtenerTicketsUsuario(currentUser.email);
+      
+      if (misTickets.length === 0) {
+        ticketList.innerHTML = '<p class="mensaje-info">No tienes tickets creados.</p>';
+        return;
+      }
+      
+      misTickets.forEach(ticket => {
+        const div = crearElementoTicket(ticket, "usuario");
+        ticketList.appendChild(div);
+      });
+    } catch (error) {
+      console.error("Error al mostrar tickets:", error);
+      mostrarMensaje("Error al cargar los tickets", "error");
     }
-    
-    misTickets.forEach(ticket => {
-      const div = crearElementoTicket(ticket, "usuario");
-      ticketList.appendChild(div);
-    });
   }
 
-  function mostrarTicketsSinAsignar() {
+  async function mostrarTicketsSinAsignar() {
     unassignedTickets.innerHTML = "";
     
-    const ticketsSinAsignar = tickets.filter(t => t.asignadoA === null);
-    
-    if (ticketsSinAsignar.length === 0) {
-      unassignedTickets.innerHTML = '<p class="mensaje-info">No hay tickets sin asignar.</p>';
-      return;
+    try {
+      console.log("Obteniendo tickets sin asignar...");
+      const ticketsSinAsignar = await obtenerTicketsSinAsignar();
+      console.log("Tickets sin asignar encontrados:", ticketsSinAsignar);
+      
+      if (ticketsSinAsignar.length === 0) {
+        unassignedTickets.innerHTML = '<p class="mensaje-info">No hay tickets sin asignar.</p>';
+        return;
+      }
+      
+      ticketsSinAsignar.forEach(ticket => {
+        console.log("Procesando ticket sin asignar:", ticket);
+        const div = crearElementoTicket(ticket, "agente-sinasignar");
+        unassignedTickets.appendChild(div);
+      });
+    } catch (error) {
+      console.error("Error al mostrar tickets sin asignar:", error);
+      mostrarMensaje("Error al cargar los tickets sin asignar", "error");
     }
-    
-    ticketsSinAsignar.forEach(ticket => {
-      const div = crearElementoTicket(ticket, "agente-sinasignar");
-      unassignedTickets.appendChild(div);
-    });
   }
 
-  function mostrarTicketsAsignados() {
+  async function mostrarTicketsAsignados() {
     ticketList.innerHTML = "";
     
-    const ticketsAsignados = tickets.filter(t => t.asignadoA === currentUser.email);
-    
-    if (ticketsAsignados.length === 0) {
-      ticketList.innerHTML = '<p class="mensaje-info">No tienes tickets asignados.</p>';
-      return;
+    try {
+      console.log("Obteniendo tickets asignados para:", currentUser.email);
+      const ticketsAsignados = await obtenerTicketsAsignados(currentUser.email);
+      console.log("Tickets asignados encontrados:", ticketsAsignados);
+      
+      if (ticketsAsignados.length === 0) {
+        ticketList.innerHTML = '<p class="mensaje-info">No tienes tickets asignados.</p>';
+        return;
+      }
+      
+      ticketsAsignados.forEach(ticket => {
+        console.log("Procesando ticket asignado:", ticket);
+        const div = crearElementoTicket(ticket, "agente-asignado");
+        ticketList.appendChild(div);
+      });
+    } catch (error) {
+      console.error("Error al mostrar tickets asignados:", error);
+      mostrarMensaje("Error al cargar los tickets asignados", "error");
     }
+  }
+
+  // Función auxiliar para formatear fechas
+  function formatearFecha(timestamp) {
+    if (!timestamp) return 'N/A';
     
-    ticketsAsignados.forEach(ticket => {
-      const div = crearElementoTicket(ticket, "agente-asignado");
-      ticketList.appendChild(div);
-    });
+    try {
+      // Si es un timestamp de Firestore
+      if (timestamp && typeof timestamp.toDate === 'function') {
+        const fecha = timestamp.toDate();
+        return fecha.toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+      
+      // Si es un timestamp normal (número)
+      if (typeof timestamp === 'number') {
+        const fecha = new Date(timestamp);
+        return fecha.toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+      
+      // Si es una fecha (Date)
+      if (timestamp instanceof Date) {
+        return timestamp.toLocaleDateString('es-ES', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+
+      // Si es un string de fecha
+      if (typeof timestamp === 'string') {
+        const fecha = new Date(timestamp);
+        if (!isNaN(fecha.getTime())) {
+          return fecha.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+      }
+
+      console.warn('Formato de fecha no reconocido:', timestamp);
+      return 'Fecha no válida';
+    } catch (error) {
+      console.error('Error al formatear fecha:', error);
+      return 'Error en fecha';
+    }
+  }
+
+  // Función para calcular tiempo restante
+  function calcularTiempoRestante(fechaLimite) {
+    if (!fechaLimite) return 'N/A';
+    
+    try {
+      let fechaLimiteDate;
+      
+      // Si es un timestamp de Firestore
+      if (fechaLimite && typeof fechaLimite.toDate === 'function') {
+        fechaLimiteDate = fechaLimite.toDate();
+      }
+      // Si es un timestamp normal (número)
+      else if (typeof fechaLimite === 'number') {
+        fechaLimiteDate = new Date(fechaLimite);
+      }
+      // Si es una fecha (Date)
+      else if (fechaLimite instanceof Date) {
+        fechaLimiteDate = fechaLimite;
+      }
+      // Si es un string de fecha
+      else if (typeof fechaLimite === 'string') {
+        fechaLimiteDate = new Date(fechaLimite);
+      }
+      
+      if (!fechaLimiteDate || isNaN(fechaLimiteDate.getTime())) {
+        console.warn('Fecha límite no válida:', fechaLimite);
+        return 'Fecha no válida';
+      }
+
+      const ahora = new Date();
+      const diferencia = fechaLimiteDate - ahora;
+      
+      if (diferencia < 0) return 'Vencido';
+      
+      const dias = Math.floor(diferencia / (1000 * 60 * 60 * 24));
+      const horas = Math.floor((diferencia % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutos = Math.floor((diferencia % (1000 * 60 * 60)) / (1000 * 60));
+      
+      if (dias > 0) return `${dias}d ${horas}h restantes`;
+      if (horas > 0) return `${horas}h ${minutos}m restantes`;
+      return `${minutos}m restantes`;
+    } catch (error) {
+      console.error('Error al calcular tiempo restante:', error);
+      return 'Error en cálculo';
+    }
   }
 
   function crearElementoTicket(ticket, tipo) {
     const div = document.createElement("div");
     div.className = `ticket ${ticket.prioridad.toLowerCase()}`;
     div.dataset.id = ticket.id;
+    
+    // Formatear fechas
+    const fechaCreacionFormateada = formatearFecha(ticket.fechaCreacion);
+    const tiempoRestante = calcularTiempoRestante(ticket.fechaLimite);
     
     // Información básica del ticket
     let contenido = `
@@ -379,8 +633,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <p><strong>Descripción:</strong> ${ticket.descripcion}</p>
         <p><strong>Prioridad:</strong> <span class="prioridad ${ticket.prioridad.toLowerCase()}">${ticket.prioridad}</span></p>
         <p><strong>SLA:</strong> ${ticket.sla}</p>
-        <p><strong>Fecha creación:</strong> ${ticket.fechaCreacion}</p>
-        <p><strong>Fecha límite:</strong> ${ticket.fechaLimite}</p>
+        <p><strong>Fecha creación:</strong> ${fechaCreacionFormateada}</p>
+        <p><strong>Tiempo restante:</strong> ${tiempoRestante}</p>
     `;
     
     // Añadir información específica según el tipo de usuario
@@ -388,22 +642,22 @@ document.addEventListener("DOMContentLoaded", () => {
       contenido += `
         <p><strong>Estado:</strong> ${ticket.estado}</p>
         ${ticket.asignadoA ? `<p><strong>Asignado a:</strong> ${ticket.asignadoA}</p>` : ''}
-        <button class="btn-detalles" onclick="verDetalles(${ticket.id})">Ver detalles</button>
+        <button class="btn-detalles" onclick="verDetalles('${ticket.id}')">Ver detalles</button>
       `;
     } else if (tipo === "agente-sinasignar") {
       contenido += `
         <p><strong>Creado por:</strong> ${ticket.creadoPor}</p>
-        <button class="btn-asignar" onclick="asignarTicket(${ticket.id})">Asignarme este ticket</button>
+        <button class="btn-asignar" onclick="asignarTicket('${ticket.id}')">Asignarme este ticket</button>
       `;
     } else if (tipo === "agente-asignado") {
       contenido += `
         <p><strong>Creado por:</strong> ${ticket.creadoPor}</p>
         <div class="controles-ticket">
           ${ticket.estado !== "Finalizado" ? 
-            `<button class="btn-finalizar" onclick="cambiarEstado(${ticket.id}, 'Finalizado')">Finalizar Ticket</button>` : ''}
+            `<button class="btn-finalizar" onclick="cambiarEstado('${ticket.id}', 'Finalizado')">Finalizar Ticket</button>` : ''}
           ${ticket.estado !== "En proceso" && ticket.estado !== "Finalizado" ? 
-            `<button class="btn-proceso" onclick="cambiarEstado(${ticket.id}, 'En proceso')">Marcar En Proceso</button>` : ''}
-          <button class="btn-detalles" onclick="verDetalles(${ticket.id})">Ver detalles</button>
+            `<button class="btn-proceso" onclick="cambiarEstado('${ticket.id}', 'En proceso')">Marcar En Proceso</button>` : ''}
+          <button class="btn-detalles" onclick="verDetalles('${ticket.id}')">Ver detalles</button>
         </div>
       `;
     }
@@ -414,48 +668,64 @@ document.addEventListener("DOMContentLoaded", () => {
     return div;
   }
 
-  // Funciones globales (window) para los botones
-  window.asignarTicket = function(ticketId) {
-    const ticket = tickets.find(t => t.id === ticketId);
-    
-    if (ticket && currentUser.role === "agente") {
-      ticket.asignadoA = currentUser.email;
-      ticket.estado = "En proceso";
+  // Modificar las funciones de asignación y cambio de estado
+  window.asignarTicket = async function(ticketId) {
+    try {
+      console.log("Intentando asignar ticket:", ticketId);
+      const ahora = new Date();
       
-      // Registrar en historial
-      ticket.historial.push({
-        fecha: new Date().toLocaleString(),
-        accion: "Ticket asignado",
-        usuario: currentUser.email
+      const resultado = await actualizarTicketEnFirebase(ticketId, {
+        asignadoA: currentUser.email,
+        estado: "En proceso",
+        historial: firebase.firestore.FieldValue.arrayUnion({
+          fecha: firebase.firestore.Timestamp.fromDate(ahora),
+          accion: "Ticket asignado",
+          usuario: currentUser.email
+        })
       });
-      
-      // Actualizar localStorage
-      localStorage.setItem("tickets", JSON.stringify(tickets));
-      
-      mostrarTicketsSinAsignar();
-      mostrarTicketsAsignados();
-      mostrarMensaje(`El ticket #${ticketId} ha sido asignado a ti.`, "success");
+
+      console.log("Resultado de asignación:", resultado);
+
+      if (resultado.exito) {
+        await Promise.all([
+          mostrarTicketsSinAsignar(),
+          mostrarTicketsAsignados()
+        ]);
+        mostrarMensaje(`El ticket #${ticketId} ha sido asignado a ti.`, "success");
+      } else {
+        mostrarMensaje(resultado.mensaje, "error");
+      }
+    } catch (error) {
+      console.error("Error al asignar ticket:", error);
+      mostrarMensaje("Error al asignar el ticket", "error");
     }
   };
 
-  window.cambiarEstado = function(ticketId, nuevoEstado) {
-    const ticket = tickets.find(t => t.id === ticketId);
-    
-    if (ticket && ticket.asignadoA === currentUser.email) {
-      ticket.estado = nuevoEstado;
+  window.cambiarEstado = async function(ticketId, nuevoEstado) {
+    try {
+      console.log("Intentando cambiar estado del ticket:", ticketId, "a:", nuevoEstado);
+      const ahora = new Date();
       
-      // Registrar en historial
-      ticket.historial.push({
-        fecha: new Date().toLocaleString(),
-        accion: `Ticket marcado como ${nuevoEstado}`,
-        usuario: currentUser.email
+      const resultado = await actualizarTicketEnFirebase(ticketId, {
+        estado: nuevoEstado,
+        historial: firebase.firestore.FieldValue.arrayUnion({
+          fecha: firebase.firestore.Timestamp.fromDate(ahora),
+          accion: `Ticket marcado como ${nuevoEstado}`,
+          usuario: currentUser.email
+        })
       });
-      
-      // Actualizar localStorage
-      localStorage.setItem("tickets", JSON.stringify(tickets));
-      
-      mostrarTicketsAsignados();
-      mostrarMensaje(`El ticket #${ticketId} ha sido marcado como ${nuevoEstado}.`, "success");
+
+      console.log("Resultado de cambio de estado:", resultado);
+
+      if (resultado.exito) {
+        await mostrarTicketsAsignados();
+        mostrarMensaje(`El ticket #${ticketId} ha sido marcado como ${nuevoEstado}.`, "success");
+      } else {
+        mostrarMensaje(resultado.mensaje, "error");
+      }
+    } catch (error) {
+      console.error("Error al cambiar estado:", error);
+      mostrarMensaje("Error al cambiar el estado del ticket", "error");
     }
   };
 

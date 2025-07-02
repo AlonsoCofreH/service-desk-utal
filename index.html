@@ -38,18 +38,6 @@
         </div>
       </div>
       
-      <div class="input-group">
-        <label for="role">Rol:</label>
-        <div class="input-icon">
-          <i class="fas fa-user-tag"></i>
-          <select id="role" required>
-            <option value="" disabled selected>Selecciona tu rol</option>
-            <option value="usuario">Usuario</option>
-            <option value="agente">Agente</option>
-          </select>
-        </div>
-      </div>
-      
       <button type="submit" class="btn-login">
         <i class="fas fa-sign-in-alt"></i> Iniciar sesión
       </button>
@@ -147,6 +135,15 @@
     </div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Configuración de Firebase -->
+  <script src="firebase-config.js"></script>
+  
+  <!-- Script principal -->
   <script src="script.js"></script>
 </body>
 </html>

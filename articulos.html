@@ -123,7 +123,7 @@
     <nav>
       <ul>
         <li><a href="index.html"><i class="fas fa-home"></i> Inicio</a></li>
-        <li><a href="#" class="active"><i class="fas fa-book"></i> Guías</a></li>
+        <li><a href="#" class="active"><i class="fas fa-book"></i> Artículos</a></li>
         <li><a href="dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
       </ul>
     </nav>
@@ -140,6 +140,40 @@
     <div class="guias-contenido">
       <h2><i class="fas fa-book"></i> Base de Conocimiento</h2>
       <p>Encuentra guías prácticas sobre los servicios tecnológicos de la universidad.</p>
+
+      <!-- Formulario para crear artículos (solo agentes) -->
+      <div id="crearArticuloContainer" style="display:none; margin-bottom:2rem;">
+        <h3><i class="fas fa-book-medical"></i> Crear Artículo</h3>
+        <form id="articuloForm">
+          <label for="categoriaArticulo">Categoría:</label>
+          <select id="categoriaArticulo" required>
+            <option value="">Selecciona una categoría</option>
+            <option value="Impresoras">Impresoras</option>
+            <option value="Office365">Office365</option>
+            <option value="Internet">Internet</option>
+            <option value="SAP">SAP</option>
+            <option value="Biblioteca">Biblioteca</option>
+            <option value="Access Point">Access Point</option>
+            <option value="Biométrico">Biométrico</option>
+            <option value="Otro">Otro</option>
+          </select>
+
+          <label for="contenidoArticulo">Contenido:</label>
+          <textarea id="contenidoArticulo" required></textarea>
+
+          <label for="dirigidoA">Dirigido a:</label>
+          <select id="dirigidoA" required>
+            <option value="usuario">Usuarios</option>
+            <option value="agente">Agentes</option>
+            <option value="todos">Para todos</option>
+          </select>
+
+          <label for="fechaVencimiento">Fecha de vencimiento:</label>
+          <input type="date" id="fechaVencimiento" />
+
+          <button type="submit"><i class="fas fa-save"></i> Publicar Artículo</button>
+        </form>
+      </div>
 
       <!-- Contenedor para artículos dinámicos desde Firebase -->
       <div id="contenedorArticulos">
@@ -183,13 +217,18 @@
       const userNameSpan = document.getElementById("userName");
       const logoutButton = document.getElementById("logoutButton");
       const contenedor = document.getElementById("contenedorArticulos");
+      const crearArticuloContainer = document.getElementById("crearArticuloContainer");
+      const articuloForm = document.getElementById("articuloForm");
       
       // Verificar si hay usuario en localStorage
       let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
       
       if (currentUser) {
         userNameSpan.textContent = currentUser.email;
-        
+        // Mostrar formulario solo a agentes
+        if (crearArticuloContainer) {
+          crearArticuloContainer.style.display = currentUser.role === "agente" ? "block" : "none";
+        }
         // Cargar artículos dinámicamente si existe el contenedor
         if (contenedor) {
           await cargarArticulos(currentUser);
@@ -198,7 +237,6 @@
         // Si no hay usuario, redirigir al login
         window.location.href = "index.html";
       }
-      
       // Event listener para logout
       logoutButton.addEventListener("click", async () => {
         try {
@@ -209,7 +247,6 @@
           console.error("Error al cerrar sesión:", error);
         }
       });
-      
       // Escuchar cambios en el estado de autenticación
       auth.onAuthStateChanged(async (user) => {
         if (!user) {
@@ -217,39 +254,68 @@
           window.location.href = "index.html";
         }
       });
+      // Lógica de creación de artículos
+      if (articuloForm) {
+        articuloForm.addEventListener("submit", async function(e) {
+          e.preventDefault();
+          const categoria = document.getElementById("categoriaArticulo").value.trim();
+          const contenido = document.getElementById("contenidoArticulo").value.trim();
+          const dirigidoA = document.getElementById("dirigidoA").value;
+          const fechaVencimiento = document.getElementById("fechaVencimiento").value;
+          // Normalizar valor para Firestore
+          let dirigidoAValue = dirigidoA;
+          if (dirigidoA === "todos") dirigidoAValue = "todos";
+          if (!categoria || !contenido || !dirigidoA) {
+            alert("Por favor, completa todos los campos obligatorios del artículo");
+            return;
+          }
+          const nuevoArticulo = {
+            categoria,
+            contenido,
+            dirigidoA: dirigidoAValue,
+            autor: currentUser.email,
+            fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+            fechaVencimiento: fechaVencimiento ? firebase.firestore.Timestamp.fromDate(new Date(fechaVencimiento)) : null
+          };
+          try {
+            await firebase.firestore().collection("articulos").add(nuevoArticulo);
+            alert("Artículo publicado exitosamente");
+            articuloForm.reset();
+            await cargarArticulos(currentUser);
+          } catch (error) {
+            console.error("Error al crear artículo:", error);
+            alert("Error al publicar el artículo");
+          }
+        });
+      }
     });
 
     // Función para cargar artículos dinámicamente
     async function cargarArticulos(currentUser) {
       const contenedor = document.getElementById("contenedorArticulos");
-      
       if (!contenedor) return;
-
       const tipo = currentUser.role === "agente" ? "agente" : "usuario";
       const esAgente = currentUser.role === "agente";
-
       try {
+        // Mostrar artículos dirigidos al tipo de usuario o a todos
         const articulos = await obtenerArticulosPorTipo(tipo);
-
         if (!articulos.length) {
           contenedor.innerHTML = "<p>No hay artículos disponibles para tu perfil.</p>";
           return;
         }
-
         contenedor.innerHTML = "";
-
         articulos.forEach(art => {
           const fecha = art.fechaCreacion?.toDate?.().toLocaleDateString("es-CL") || "Desconocida";
           const vencido = art.fechaVencimiento && new Date(art.fechaVencimiento.toDate?.()) < new Date();
           const claseVencido = vencido ? "despublicado" : "";
-
+          const vencidoLabel = vencido ? '<span style="color:red;font-weight:bold;">(Vencido)</span>' : '';
           const div = document.createElement("div");
           div.className = `articulo ${claseVencido}`;
           div.innerHTML = `
-            <h3>${art.categoria}</h3>
+            <h3>${art.categoria} ${vencidoLabel}</h3>
             <p class="meta">Publicado por <strong>${art.autor}</strong> el <em>${fecha}</em></p>
             <p class="contenido">${art.contenido}</p>
-            <div class="etiquetas">Visible para: ${art.dirigidoA === "agente" ? "Agentes" : "Usuarios"}</div>
+            <div class="etiquetas">Visible para: ${art.dirigidoA === "agente" ? "Agentes" : art.dirigidoA === "usuario" ? "Usuarios" : "Todos"}</div>
             ${esAgente ? `
               <div style="margin-top: 1rem;">
                 <button class="btn-editar" onclick="editarArticulo('${art.id}', this)">✏️ Editar</button>
@@ -270,10 +336,9 @@
       try {
         const snapshot = await firebase.firestore()
           .collection("articulos")
-          .where("dirigidoA", "in", [tipo, "ambos"])
+          .where("dirigidoA", "in", [tipo, "todos"])
           .orderBy("fechaCreacion", "desc")
           .get();
-        
         return snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()

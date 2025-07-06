@@ -131,21 +131,58 @@
         padding: 1rem;
       }
     }
+
+    /* Estilos para menú desplegable */
+    .dropdown-nav {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      background-color: var(--white);
+      min-width: 200px;
+      box-shadow: var(--box-shadow);
+      z-index: 1000;
+      border-radius: var(--border-radius);
+      margin-top: 0.5rem;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-menu li {
+      padding: 0.5rem 1rem;
+    }
+
+    .dropdown-menu li a {
+      color: var(--dark-gray);
+      text-decoration: none;
+      display: block;
+    }
+
+    .dropdown-menu li a:hover {
+      background-color: var(--light-gray);
+    }
   </style>
 </head>
 <body>
 
   <!-- Header -->
   <header class="app-header">
-    <div class="logo">
-      <i class="fas fa-book"></i> Base de Conocimiento - UTalca
+    <div class="logo" style="display:flex;align-items:center;gap:0.5rem;">
+      <img src="utal.png" alt="Logo Universidad de Talca" style="max-width:110px;max-height:110px;vertical-align:middle;" />
     </div>
-    <nav>
-      <ul>
+    <nav class="dropdown-nav">
+      <button id="menuToggle" class="menu-toggle"><i class="fas fa-bars"></i> Menú</button>
+      <ul id="mainMenu" class="dropdown-menu">
         <li><a href="index.html"><i class="fas fa-home"></i> Inicio</a></li>
-        <li><a href="#" class="active"><i class="fas fa-book"></i> Artículos</a></li>
+        <li><a href="articulos.html" class="active"><i class="fas fa-book"></i> Artículos</a></li>
         <li><a href="dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
         <li><a href="cambios.html"><i class="fas fa-exchange-alt"></i> Cambios</a></li>
+        <li><a href="activos.html"><i class="fas fa-desktop"></i> Activos</a></li>
       </ul>
     </nav>
     <div class="user-info" id="userInfo">
@@ -208,12 +245,6 @@
         </form>
       </div>
 
-      <!-- Listado de cambios registrados -->
-      <div id="listaCambiosContainer" style="display:none; margin-bottom:2rem;">
-        <h3><i class="fas fa-history"></i> Cambios Registrados</h3>
-        <div id="listaCambios"></div>
-      </div>
-
       <!-- Contenedor para artículos dinámicos desde Firebase -->
       <div id="contenedorArticulos">
         <!-- Los artículos se cargarán dinámicamente aquí -->
@@ -240,10 +271,6 @@
       const toggleCrearArticulo = document.getElementById("toggleCrearArticulo");
       const cerrarFormulario = document.getElementById("cerrarFormulario");
       const articuloForm = document.getElementById("articuloForm");
-      const crearCambioContainer = document.getElementById("crearCambioContainer");
-      const cambioForm = document.getElementById("cambioForm");
-      const listaCambiosContainer = document.getElementById("listaCambiosContainer");
-      const listaCambios = document.getElementById("listaCambios");
       
       // Verificar si hay usuario en localStorage
       let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
@@ -254,17 +281,6 @@
         // Mostrar botón de crear solo a agentes
         if (botonCrearContainer) {
           botonCrearContainer.style.display = currentUser.role === "agente" ? "block" : "none";
-        }
-        
-        // Mostrar formulario y lista de cambios solo a agentes
-        if (crearCambioContainer) {
-          crearCambioContainer.style.display = currentUser.role === "agente" ? "block" : "none";
-        }
-        if (listaCambiosContainer) {
-          listaCambiosContainer.style.display = currentUser.role === "agente" ? "block" : "none";
-        }
-        if (currentUser.role === "agente") {
-          await cargarCambios();
         }
         
         // Cargar artículos dinámicamente si existe el contenedor
@@ -372,38 +388,6 @@
           }
         });
       }
-
-      // Función para leer y mostrar los cambios
-      async function cargarCambios() {
-        if (!listaCambios) return;
-        listaCambios.innerHTML = '<p>Cargando cambios...</p>';
-        try {
-          const snapshot = await firebase.firestore()
-            .collection("cambios")
-            .orderBy("fechaHora", "desc")
-            .get();
-          if (snapshot.empty) {
-            listaCambios.innerHTML = '<p>No hay cambios registrados.</p>';
-            return;
-          }
-          let html = '<ul style="list-style:none;padding:0;">';
-          snapshot.forEach(doc => {
-            const c = doc.data();
-            const fecha = c.fechaHora && c.fechaHora.toDate ? c.fechaHora.toDate().toLocaleString("es-CL") : "Desconocida";
-            html += `<li style="margin-bottom:1.5rem;padding:1rem;border:1px solid #eee;border-radius:8px;">
-              <strong>Servicio:</strong> ${c.servicio}<br>
-              <strong>Tipo de cambio:</strong> ${c.tipoCambio}<br>
-              <strong>Agente:</strong> ${c.agente}<br>
-              <strong>Fecha y hora:</strong> ${fecha}<br>
-              <strong>Descripción:</strong><br><span style="white-space:pre-line;">${c.descripcion}</span>
-            </li>`;
-          });
-          html += '</ul>';
-          listaCambios.innerHTML = html;
-        } catch (error) {
-          listaCambios.innerHTML = '<p>Error al cargar los cambios.</p>';
-        }
-      }
     });
 
     // Función para cargar artículos dinámicamente
@@ -454,7 +438,7 @@
         console.log(`Artículos cargados exitosamente: ${articulos.length} artículos`);
       } catch (error) {
         console.error("Error al cargar artículos:", error);
-        contenedor.innerHTML = "<p>Error al cargar los artículos. Por favor, intenta de nuevo.</p>";
+        contenedor.innerHTML = "<p>No hay artículos registrados.</p>";
       }
     }
 
@@ -543,6 +527,23 @@
         btn.disabled = false;
       }
     }
+
+    // Menú desplegable para navegación principal
+    document.addEventListener('DOMContentLoaded', function() {
+      const menuToggle = document.getElementById('menuToggle');
+      const mainMenu = document.getElementById('mainMenu');
+      if (menuToggle && mainMenu) {
+        menuToggle.addEventListener('click', function(e) {
+          e.stopPropagation();
+          mainMenu.classList.toggle('show');
+        });
+        document.addEventListener('click', function(e) {
+          if (!mainMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+            mainMenu.classList.remove('show');
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>

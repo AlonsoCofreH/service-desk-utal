@@ -33,19 +33,26 @@
       margin-bottom: 0.5rem;
       white-space: pre-line;
     }
+    .dropdown-nav {
+      position: relative;
+      display: inline-block;
+    }
+    /* Removed conflicting .menu-toggle and .dropdown-menu styles to use global styles from style.css */
   </style>
 </head>
 <body>
   <header class="app-header">
-    <div class="logo">
-      <i class="fas fa-exchange-alt"></i> Control de Cambios - UTalca
+    <div class="logo" style="display:flex;align-items:center;gap:0.5rem;">
+      <img src="utal.png" alt="Logo Universidad de Talca" style="max-width:110px;max-height:110px;vertical-align:middle;" />
     </div>
-    <nav>
-      <ul>
+    <nav class="dropdown-nav">
+      <button id="menuToggle" class="menu-toggle"><i class="fas fa-bars"></i> Menú</button>
+      <ul id="mainMenu" class="dropdown-menu">
         <li><a href="index.html"><i class="fas fa-home"></i> Inicio</a></li>
         <li><a href="articulos.html"><i class="fas fa-book"></i> Artículos</a></li>
-        <li><a href="cambios.html"><i class="fas fa-exchange-alt"></i> Cambios</a></li>
         <li><a href="dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        <li><a href="cambios.html" class="active"><i class="fas fa-exchange-alt"></i> Cambios</a></li>
+        <li><a href="activos.html"><i class="fas fa-desktop"></i> Activos</a></li>
       </ul>
     </nav>
     <div class="user-info" id="userInfo">
@@ -194,6 +201,22 @@
         } catch (error) {
           listaCambios.innerHTML = '<p>Error al cargar los cambios.</p>';
         }
+      }
+    });
+    // Menú desplegable para navegación principal
+    document.addEventListener('DOMContentLoaded', function() {
+      const menuToggle = document.getElementById('menuToggle');
+      const mainMenu = document.getElementById('mainMenu');
+      if (menuToggle && mainMenu) {
+        menuToggle.addEventListener('click', function(e) {
+          e.stopPropagation();
+          mainMenu.classList.toggle('show');
+        });
+        document.addEventListener('click', function(e) {
+          if (!mainMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+            mainMenu.classList.remove('show');
+          }
+        });
       }
     });
   </script>

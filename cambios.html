@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control de Cambios</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .cambios-contenido {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    .cambio {
+      background-color: var(--white);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      transition: var(--transition);
+    }
+    .cambio h4 {
+      margin-top: 0;
+      color: var(--secondary-color);
+    }
+    .cambio .meta {
+      color: var(--dark-gray);
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+    }
+    .cambio .descripcion {
+      margin-bottom: 0.5rem;
+      white-space: pre-line;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="logo">
+      <i class="fas fa-exchange-alt"></i> Control de Cambios - UTalca
+    </div>
+    <nav>
+      <ul>
+        <li><a href="index.html"><i class="fas fa-home"></i> Inicio</a></li>
+        <li><a href="articulos.html"><i class="fas fa-book"></i> Artículos</a></li>
+        <li><a href="#" class="active"><i class="fas fa-exchange-alt"></i> Cambios</a></li>
+        <li><a href="dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+      </ul>
+    </nav>
+    <div class="user-info" id="userInfo">
+      <span id="userName"></span>
+      <button id="logoutButton">
+        <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+      </button>
+    </div>
+  </header>
+  <div class="dashboard">
+    <div class="cambios-contenido">
+      <h2><i class="fas fa-exchange-alt"></i> Control de Cambios</h2>
+      <p>Registra y visualiza los cambios realizados en los servicios críticos.</p>
+      <!-- Formulario para registrar un cambio (solo agentes) -->
+      <div id="crearCambioContainer" style="display:none; margin-bottom:2rem;">
+        <h3><i class="fas fa-exchange-alt"></i> Registrar Cambio</h3>
+        <form id="cambioForm">
+          <label for="servicioCambio">Servicio:</label>
+          <select id="servicioCambio" required>
+            <option value="">Selecciona un servicio</option>
+            <option value="Impresoras">Impresoras</option>
+            <option value="Office365">Office365</option>
+            <option value="Internet">Internet</option>
+            <option value="SAP">SAP</option>
+            <option value="Biblioteca">Biblioteca</option>
+            <option value="Access Point">Access Point</option>
+            <option value="Biométrico">Biométrico</option>
+            <option value="Otro">Otro</option>
+          </select>
+          <label for="tipoCambio">Tipo de Cambio:</label>
+          <select id="tipoCambio" required>
+            <option value="">Selecciona el tipo de cambio</option>
+            <option value="Estándar">Estándar</option>
+            <option value="Normal">Normal</option>
+            <option value="Emergencia">Emergencia</option>
+          </select>
+          <label for="descripcionCambio">Descripción del Cambio:</label>
+          <textarea id="descripcionCambio" required placeholder="Describe detalladamente el cambio realizado..."></textarea>
+          <button type="submit"><i class="fas fa-save"></i> Registrar Cambio</button>
+        </form>
+      </div>
+      <!-- Listado de cambios registrados -->
+      <div id="listaCambiosContainer" style="display:none; margin-bottom:2rem;">
+        <h3><i class="fas fa-history"></i> Cambios Registrados</h3>
+        <div id="listaCambios"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const userNameSpan = document.getElementById("userName");
+      const logoutButton = document.getElementById("logoutButton");
+      const crearCambioContainer = document.getElementById("crearCambioContainer");
+      const cambioForm = document.getElementById("cambioForm");
+      const listaCambiosContainer = document.getElementById("listaCambiosContainer");
+      const listaCambios = document.getElementById("listaCambios");
+      let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+      if (currentUser) {
+        userNameSpan.textContent = currentUser.email;
+        // Mostrar formulario y lista solo a agentes
+        if (crearCambioContainer) {
+          crearCambioContainer.style.display = currentUser.role === "agente" ? "block" : "none";
+        }
+        if (listaCambiosContainer) {
+          listaCambiosContainer.style.display = currentUser.role === "agente" ? "block" : "none";
+        }
+        if (currentUser.role === "agente") {
+          await cargarCambios();
+        }
+      } else {
+        window.location.href = "index.html";
+      }
+      logoutButton.addEventListener("click", async () => {
+        try {
+          await auth.signOut();
+          localStorage.removeItem("currentUser");
+          window.location.href = "index.html";
+        } catch (error) {
+          console.error("Error al cerrar sesión:", error);
+        }
+      });
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+          localStorage.removeItem("currentUser");
+          window.location.href = "index.html";
+        }
+      });
+      // Lógica de creación de cambios
+      if (cambioForm) {
+        cambioForm.addEventListener("submit", async function(e) {
+          e.preventDefault();
+          const servicio = document.getElementById("servicioCambio").value;
+          const tipoCambio = document.getElementById("tipoCambio").value;
+          const descripcion = document.getElementById("descripcionCambio").value.trim();
+          if (!servicio || !tipoCambio || !descripcion) {
+            alert("Por favor, completa todos los campos del control de cambio");
+            return;
+          }
+          const nuevoCambio = {
+            agente: currentUser.email,
+            fechaHora: firebase.firestore.FieldValue.serverTimestamp(),
+            servicio,
+            tipoCambio,
+            descripcion
+          };
+          try {
+            await firebase.firestore().collection("cambios").add(nuevoCambio);
+            alert("Cambio registrado exitosamente");
+            cambioForm.reset();
+            await cargarCambios();
+          } catch (error) {
+            console.error("Error al registrar cambio:", error);
+            alert("Error al registrar el cambio");
+          }
+        });
+      }
+      // Función para leer y mostrar los cambios
+      async function cargarCambios() {
+        if (!listaCambios) return;
+        listaCambios.innerHTML = '<p>Cargando cambios...</p>';
+        try {
+          const snapshot = await firebase.firestore()
+            .collection("cambios")
+            .orderBy("fechaHora", "desc")
+            .get();
+          if (snapshot.empty) {
+            listaCambios.innerHTML = '<p>No hay cambios registrados.</p>';
+            return;
+          }
+          let html = '';
+          snapshot.forEach(doc => {
+            const c = doc.data();
+            const fecha = c.fechaHora && c.fechaHora.toDate ? c.fechaHora.toDate().toLocaleString("es-CL") : "Desconocida";
+            html += `<div class="cambio">
+              <h4>${c.servicio} <span style="font-size:0.9em;color:#888;">(${c.tipoCambio})</span></h4>
+              <div class="meta"><strong>Agente:</strong> ${c.agente} | <strong>Fecha y hora:</strong> ${fecha}</div>
+              <div class="descripcion">${c.descripcion}</div>
+            </div>`;
+          });
+          listaCambios.innerHTML = html;
+        } catch (error) {
+          listaCambios.innerHTML = '<p>Error al cargar los cambios.</p>';
+        }
+      }
+    });
+  </script>
+</body>
+</html>

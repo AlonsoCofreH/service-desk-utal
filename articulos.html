@@ -207,6 +207,44 @@
         </form>
       </div>
 
+      <!-- Formulario para registrar un Control de Cambio (solo agentes) -->
+      <div id="crearCambioContainer" style="display:none; margin-bottom:2rem;">
+        <h3><i class="fas fa-exchange-alt"></i> Registrar Control de Cambio</h3>
+        <form id="cambioForm">
+          <label for="servicioCambio">Servicio:</label>
+          <select id="servicioCambio" required>
+            <option value="">Selecciona un servicio</option>
+            <option value="Impresoras">Impresoras</option>
+            <option value="Office365">Office365</option>
+            <option value="Internet">Internet</option>
+            <option value="SAP">SAP</option>
+            <option value="Biblioteca">Biblioteca</option>
+            <option value="Access Point">Access Point</option>
+            <option value="Biométrico">Biométrico</option>
+            <option value="Otro">Otro</option>
+          </select>
+
+          <label for="tipoCambio">Tipo de Cambio:</label>
+          <select id="tipoCambio" required>
+            <option value="">Selecciona el tipo de cambio</option>
+            <option value="Estándar">Estándar</option>
+            <option value="Normal">Normal</option>
+            <option value="Emergencia">Emergencia</option>
+          </select>
+
+          <label for="descripcionCambio">Descripción del Cambio:</label>
+          <textarea id="descripcionCambio" required placeholder="Describe detalladamente el cambio realizado..."></textarea>
+
+          <button type="submit"><i class="fas fa-save"></i> Registrar Cambio</button>
+        </form>
+      </div>
+
+      <!-- Listado de cambios registrados -->
+      <div id="listaCambiosContainer" style="display:none; margin-bottom:2rem;">
+        <h3><i class="fas fa-history"></i> Cambios Registrados</h3>
+        <div id="listaCambios"></div>
+      </div>
+
       <!-- Contenedor para artículos dinámicos desde Firebase -->
       <div id="contenedorArticulos">
         <!-- Los artículos se cargarán dinámicamente aquí -->
@@ -233,6 +271,10 @@
       const toggleCrearArticulo = document.getElementById("toggleCrearArticulo");
       const cerrarFormulario = document.getElementById("cerrarFormulario");
       const articuloForm = document.getElementById("articuloForm");
+      const crearCambioContainer = document.getElementById("crearCambioContainer");
+      const cambioForm = document.getElementById("cambioForm");
+      const listaCambiosContainer = document.getElementById("listaCambiosContainer");
+      const listaCambios = document.getElementById("listaCambios");
       
       // Verificar si hay usuario en localStorage
       let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
@@ -243,6 +285,17 @@
         // Mostrar botón de crear solo a agentes
         if (botonCrearContainer) {
           botonCrearContainer.style.display = currentUser.role === "agente" ? "block" : "none";
+        }
+        
+        // Mostrar formulario y lista de cambios solo a agentes
+        if (crearCambioContainer) {
+          crearCambioContainer.style.display = currentUser.role === "agente" ? "block" : "none";
+        }
+        if (listaCambiosContainer) {
+          listaCambiosContainer.style.display = currentUser.role === "agente" ? "block" : "none";
+        }
+        if (currentUser.role === "agente") {
+          await cargarCambios();
         }
         
         // Cargar artículos dinámicamente si existe el contenedor
@@ -349,6 +402,68 @@
             submitBtn.disabled = false;
           }
         });
+      }
+
+      // Lógica de creación de cambios
+      if (cambioForm) {
+        cambioForm.addEventListener("submit", async function(e) {
+          e.preventDefault();
+          const servicio = document.getElementById("servicioCambio").value;
+          const tipoCambio = document.getElementById("tipoCambio").value;
+          const descripcion = document.getElementById("descripcionCambio").value.trim();
+          if (!servicio || !tipoCambio || !descripcion) {
+            alert("Por favor, completa todos los campos del control de cambio");
+            return;
+          }
+          const nuevoCambio = {
+            agente: currentUser.email,
+            fechaHora: firebase.firestore.FieldValue.serverTimestamp(),
+            servicio,
+            tipoCambio,
+            descripcion
+          };
+          try {
+            await firebase.firestore().collection("cambios").add(nuevoCambio);
+            alert("Cambio registrado exitosamente");
+            cambioForm.reset();
+            await cargarCambios();
+          } catch (error) {
+            console.error("Error al registrar cambio:", error);
+            alert("Error al registrar el cambio");
+          }
+        });
+      }
+
+      // Función para leer y mostrar los cambios
+      async function cargarCambios() {
+        if (!listaCambios) return;
+        listaCambios.innerHTML = '<p>Cargando cambios...</p>';
+        try {
+          const snapshot = await firebase.firestore()
+            .collection("cambios")
+            .orderBy("fechaHora", "desc")
+            .get();
+          if (snapshot.empty) {
+            listaCambios.innerHTML = '<p>No hay cambios registrados.</p>';
+            return;
+          }
+          let html = '<ul style="list-style:none;padding:0;">';
+          snapshot.forEach(doc => {
+            const c = doc.data();
+            const fecha = c.fechaHora && c.fechaHora.toDate ? c.fechaHora.toDate().toLocaleString("es-CL") : "Desconocida";
+            html += `<li style="margin-bottom:1.5rem;padding:1rem;border:1px solid #eee;border-radius:8px;">
+              <strong>Servicio:</strong> ${c.servicio}<br>
+              <strong>Tipo de cambio:</strong> ${c.tipoCambio}<br>
+              <strong>Agente:</strong> ${c.agente}<br>
+              <strong>Fecha y hora:</strong> ${fecha}<br>
+              <strong>Descripción:</strong><br><span style="white-space:pre-line;">${c.descripcion}</span>
+            </li>`;
+          });
+          html += '</ul>';
+          listaCambios.innerHTML = html;
+        } catch (error) {
+          listaCambios.innerHTML = '<p>Error al cargar los cambios.</p>';
+        }
       }
     });
 

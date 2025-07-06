@@ -271,6 +271,8 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Configurando vista de agente");
       ticketFormContainer.style.display = "none";
       unassignedTicketsContainer.style.display = "block";
+      // Mostrar el formulario de artículos para agentes
+      document.getElementById("crearArticuloContainer").style.display = "block";
       // Asegurarnos de que ambas funciones se ejecuten
       Promise.all([
         mostrarTicketsSinAsignar(),

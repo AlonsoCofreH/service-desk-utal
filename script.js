@@ -336,8 +336,19 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Intentando crear ticket en Firebase...");
       const resultado = await crearTicketEnFirebase(nuevoTicket);
       console.log("Resultado de creación:", resultado);
-      
+      // Registro automático de cambio
       if (resultado.exito) {
+        try {
+          await firebase.firestore().collection("cambios").add({
+            agente: currentUser.email,
+            fechaHora: firebase.firestore.FieldValue.serverTimestamp(),
+            servicio: servicio,
+            tipoCambio: "Normal",
+            descripcion: `Se creó un ticket para el servicio '${servicio}' con tipo '${tipoServicio}'. Descripción: ${descripcion}`
+          });
+        } catch (e) {
+          console.error("No se pudo registrar el cambio automático del ticket:", e);
+        }
         console.log("Ticket creado exitosamente");
         mostrarTickets();
         ticketForm.reset();
@@ -715,6 +726,8 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     }
     
+    // Añadir botón de chat para todos los tickets
+    contenido += `<button class="btn-chat" onclick="abrirChatTicket('${ticket.id}')">Ver registro del chat</button>`;
     contenido += `</div>`;
     div.innerHTML = contenido;
     
@@ -851,6 +864,49 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 300);
       }
     });
+  }
+
+  // --- CHAT EN TICKETS ---
+  let chatTicketId = null;
+  const chatTicketContainer = document.getElementById("chatTicketContainer");
+  const chatMensajes = document.getElementById("chatMensajes");
+  const chatForm = document.getElementById("chatForm");
+  const chatInput = document.getElementById("chatInput");
+
+  // Mostrar chat solo si el ticket está abierto y el usuario es agente o creador
+  window.abrirChatTicket = function(ticketId, ticket) {
+    chatTicketId = ticketId;
+    chatTicketContainer.style.display = "block";
+    cargarMensajesChat();
+  };
+
+  if (chatForm) {
+    chatForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      if (!chatTicketId) return;
+      const mensaje = chatInput.value.trim();
+      if (!mensaje) return;
+      await firebase.firestore().collection("tickets").doc(chatTicketId).collection("chat").add({
+        mensaje,
+        autor: currentUser.email,
+        fecha: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      chatInput.value = "";
+      cargarMensajesChat();
+    });
+  }
+
+  async function cargarMensajesChat() {
+    if (!chatTicketId) return;
+    const chatRef = firebase.firestore().collection("tickets").doc(chatTicketId).collection("chat").orderBy("fecha");
+    const snapshot = await chatRef.get();
+    chatMensajes.innerHTML = "";
+    snapshot.forEach(doc => {
+      const m = doc.data();
+      const fecha = m.fecha && m.fecha.toDate ? m.fecha.toDate().toLocaleString("es-CL") : "";
+      chatMensajes.innerHTML += `<div style='margin-bottom:0.5rem;'><strong>${m.autor}:</strong> ${m.mensaje} <span style='color:#888;font-size:0.8em;'>${fecha}</span></div>`;
+    });
+    chatMensajes.scrollTop = chatMensajes.scrollHeight;
   }
 
   function mostrarMensaje(mensaje, tipo) {

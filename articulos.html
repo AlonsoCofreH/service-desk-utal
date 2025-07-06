@@ -145,6 +145,7 @@
         <li><a href="index.html"><i class="fas fa-home"></i> Inicio</a></li>
         <li><a href="#" class="active"><i class="fas fa-book"></i> Artículos</a></li>
         <li><a href="dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        <li><a href="cambios.html"><i class="fas fa-exchange-alt"></i> Cambios</a></li>
       </ul>
     </nav>
     <div class="user-info" id="userInfo">
@@ -204,38 +205,6 @@
           <input type="date" id="fechaVencimiento" />
 
           <button type="submit"><i class="fas fa-save"></i> Publicar Artículo</button>
-        </form>
-      </div>
-
-      <!-- Formulario para registrar un Control de Cambio (solo agentes) -->
-      <div id="crearCambioContainer" style="display:none; margin-bottom:2rem;">
-        <h3><i class="fas fa-exchange-alt"></i> Registrar Control de Cambio</h3>
-        <form id="cambioForm">
-          <label for="servicioCambio">Servicio:</label>
-          <select id="servicioCambio" required>
-            <option value="">Selecciona un servicio</option>
-            <option value="Impresoras">Impresoras</option>
-            <option value="Office365">Office365</option>
-            <option value="Internet">Internet</option>
-            <option value="SAP">SAP</option>
-            <option value="Biblioteca">Biblioteca</option>
-            <option value="Access Point">Access Point</option>
-            <option value="Biométrico">Biométrico</option>
-            <option value="Otro">Otro</option>
-          </select>
-
-          <label for="tipoCambio">Tipo de Cambio:</label>
-          <select id="tipoCambio" required>
-            <option value="">Selecciona el tipo de cambio</option>
-            <option value="Estándar">Estándar</option>
-            <option value="Normal">Normal</option>
-            <option value="Emergencia">Emergencia</option>
-          </select>
-
-          <label for="descripcionCambio">Descripción del Cambio:</label>
-          <textarea id="descripcionCambio" required placeholder="Describe detalladamente el cambio realizado..."></textarea>
-
-          <button type="submit"><i class="fas fa-save"></i> Registrar Cambio</button>
         </form>
       </div>
 
@@ -400,36 +369,6 @@
             const submitBtn = articuloForm.querySelector('button[type="submit"]');
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
-          }
-        });
-      }
-
-      // Lógica de creación de cambios
-      if (cambioForm) {
-        cambioForm.addEventListener("submit", async function(e) {
-          e.preventDefault();
-          const servicio = document.getElementById("servicioCambio").value;
-          const tipoCambio = document.getElementById("tipoCambio").value;
-          const descripcion = document.getElementById("descripcionCambio").value.trim();
-          if (!servicio || !tipoCambio || !descripcion) {
-            alert("Por favor, completa todos los campos del control de cambio");
-            return;
-          }
-          const nuevoCambio = {
-            agente: currentUser.email,
-            fechaHora: firebase.firestore.FieldValue.serverTimestamp(),
-            servicio,
-            tipoCambio,
-            descripcion
-          };
-          try {
-            await firebase.firestore().collection("cambios").add(nuevoCambio);
-            alert("Cambio registrado exitosamente");
-            cambioForm.reset();
-            await cargarCambios();
-          } catch (error) {
-            console.error("Error al registrar cambio:", error);
-            alert("Error al registrar el cambio");
           }
         });
       }

@@ -58,6 +58,7 @@ El dashboard permite filtrar los datos por diferentes períodos:
 - **Base de Datos**: Firebase Firestore
 - **Autenticación**: Firebase Authentication
 - **Iconos**: Font Awesome 6
+- **Diseño**: Paleta de colores corporativa UTalca
 
 ## Instalación y Configuración
 
@@ -123,15 +124,15 @@ Tendencia = ((Actual - Anterior) / Anterior) * 100
 ## Personalización
 
 ### Colores de Servicios
-Cada tipo de servicio tiene un color específico:
-- Computadora: Azul/Púrpura
-- SAP: Rosa/Rojo
-- Biblioteca: Azul/Cian
-- Internet: Verde/Cian
-- Office365: Rosa/Amarillo
-- Impresora: Cian/Rosa
-- Access Point: Naranja/Rosa
-- Biométrico: Rosa/Rosa claro
+Cada tipo de servicio tiene un color específico basado en la paleta corporativa:
+- Computadora: Azul principal (#3498db)
+- SAP: Rojo acento (#e74c3c)
+- Biblioteca: Azul información (#3498db)
+- Internet: Verde éxito (#27ae60)
+- Office365: Naranja advertencia (#f39c12)
+- Impresora: Azul hover (#2980b9)
+- Access Point: Gris secundario (#2c3e50)
+- Biométrico: Rojo peligro (#e74c3c)
 
 ### Responsive Design
 El dashboard se adapta automáticamente a diferentes tamaños de pantalla:

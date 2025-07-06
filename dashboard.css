@@ -2,56 +2,10 @@
 
 .dashboard-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: var(--light-bg);
 }
 
-.dashboard-header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 1rem 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.dashboard-header .logo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.dashboard-header nav ul {
-  display: flex;
-  list-style: none;
-  gap: 2rem;
-  margin: 0;
-  padding: 0;
-}
-
-.dashboard-header nav a {
-  text-decoration: none;
-  color: #666;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.dashboard-header nav a:hover,
-.dashboard-header nav a.active {
-  background: #667eea;
-  color: white;
-}
+/* El header del dashboard usa los estilos del app-header de style.css */
 
 .dashboard-content {
   padding: 2rem;
@@ -59,18 +13,36 @@
   margin: 0 auto;
 }
 
+/* Estilos adicionales para coherencia con el sistema */
+.dashboard-container .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.dashboard-container .user-info button {
+  background-color: transparent;
+  border: 1px solid var(--white);
+  padding: 0.5rem 1rem;
+  color: var(--white);
+}
+
+.dashboard-container .user-info button:hover {
+  background-color: var(--white);
+  color: var(--secondary-color);
+}
+
 /* Filtros */
 .filters-section {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background-color: var(--white);
   padding: 1.5rem;
-  border-radius: 15px;
+  border-radius: var(--border-radius);
   margin-bottom: 2rem;
   display: flex;
   align-items: center;
   gap: 2rem;
   flex-wrap: wrap;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--box-shadow);
 }
 
 .filter-group {
@@ -81,41 +53,43 @@
 
 .filter-group label {
   font-weight: 600;
-  color: #333;
+  color: var(--secondary-color);
   white-space: nowrap;
 }
 
 .filter-group select,
 .filter-group input {
   padding: 0.5rem 1rem;
-  border: 2px solid #e1e5e9;
-  border-radius: 8px;
+  border: 1px solid var(--gray);
+  border-radius: var(--border-radius);
   font-size: 0.9rem;
-  background: white;
-  transition: border-color 0.3s ease;
+  background-color: var(--white);
+  transition: var(--transition);
 }
 
 .filter-group select:focus,
 .filter-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
 }
 
 .btn-refresh {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background-color: var(--primary-color);
+  color: var(--white);
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.3s ease;
+  transition: var(--transition);
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
 
 .btn-refresh:hover {
+  background-color: var(--primary-hover);
   transform: translateY(-2px);
 }
 
@@ -128,44 +102,34 @@
 }
 
 .kpi-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background-color: var(--white);
   padding: 1.5rem;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: var(--transition);
   position: relative;
   overflow: hidden;
-}
-
-.kpi-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-left: 4px solid var(--primary-color);
 }
 
 .kpi-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 .kpi-icon {
   width: 60px;
   height: 60px;
-  border-radius: 12px;
+  border-radius: var(--border-radius);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  color: white;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: var(--white);
+  background-color: var(--primary-color);
   flex-shrink: 0;
 }
 
@@ -176,12 +140,12 @@
 .kpi-content h3 {
   font-size: 2rem;
   font-weight: bold;
-  color: #333;
+  color: var(--secondary-color);
   margin: 0 0 0.25rem 0;
 }
 
 .kpi-content p {
-  color: #666;
+  color: var(--dark-gray);
   margin: 0 0 0.5rem 0;
   font-weight: 500;
 }
@@ -195,11 +159,11 @@
 }
 
 .kpi-trend.positive {
-  color: #10b981;
+  color: var(--success);
 }
 
 .kpi-trend.negative {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 /* Gráficos */
@@ -211,16 +175,15 @@
 }
 
 .chart-container {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background-color: var(--white);
   padding: 1.5rem;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
 }
 
 .chart-container h3 {
   margin: 0 0 1rem 0;
-  color: #333;
+  color: var(--secondary-color);
   font-size: 1.2rem;
   display: flex;
   align-items: center;
@@ -233,17 +196,16 @@
 
 /* Tabla */
 .table-section {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background-color: var(--white);
   padding: 1.5rem;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
   margin-bottom: 2rem;
 }
 
 .table-section h3 {
   margin: 0 0 1rem 0;
-  color: #333;
+  color: var(--secondary-color);
   font-size: 1.2rem;
   display: flex;
   align-items: center;
@@ -268,33 +230,32 @@
 }
 
 .table-container th {
-  background: #f8fafc;
+  background-color: var(--light-bg);
   font-weight: 600;
-  color: #333;
+  color: var(--secondary-color);
   position: sticky;
   top: 0;
 }
 
 .table-container tr:hover {
-  background: #f8fafc;
+  background-color: var(--light-bg);
 }
 
 .table-container td {
-  color: #666;
+  color: var(--dark-gray);
 }
 
 /* Métricas de Agente */
 .agent-metrics {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
+  background-color: var(--white);
   padding: 1.5rem;
-  border-radius: 15px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
 }
 
 .agent-metrics h3 {
   margin: 0 0 1rem 0;
-  color: #333;
+  color: var(--secondary-color);
   font-size: 1.2rem;
   display: flex;
   align-items: center;
@@ -308,10 +269,10 @@
 }
 
 .agent-kpi-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background-color: var(--primary-color);
+  color: var(--white);
   padding: 1rem;
-  border-radius: 10px;
+  border-radius: var(--border-radius);
   text-align: center;
 }
 
@@ -407,7 +368,7 @@
   width: 20px;
   height: 20px;
   margin: -10px 0 0 -10px;
-  border: 2px solid #667eea;
+  border: 2px solid var(--primary-color);
   border-top: 2px solid transparent;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -419,11 +380,11 @@
 }
 
 /* Colores para diferentes tipos de servicios */
-.service-computadora { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-.service-sap { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
-.service-biblioteca { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
-.service-internet { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
-.service-office365 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
-.service-impresora { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
-.service-access-point { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
-.service-biometrico { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); } 
+.service-computadora { background-color: var(--primary-color); }
+.service-sap { background-color: var(--accent-color); }
+.service-biblioteca { background-color: var(--info); }
+.service-internet { background-color: var(--success); }
+.service-office365 { background-color: var(--warning); }
+.service-impresora { background-color: var(--primary-hover); }
+.service-access-point { background-color: var(--secondary-color); }
+.service-biometrico { background-color: var(--danger); } 

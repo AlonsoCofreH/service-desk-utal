@@ -342,8 +342,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const labels = Object.keys(servicios);
     const data = Object.values(servicios);
     const colors = [
-      '#667eea', '#f093fb', '#4facfe', '#43e97b', 
-      '#fa709a', '#a8edea', '#ffecd2', '#ff9a9e'
+      '#3498db', '#e74c3c', '#2c3e50', '#27ae60', 
+      '#f39c12', '#2980b9', '#34495e', '#8e44ad'
     ];
     
     if (charts.serviceChart) {
@@ -404,14 +404,14 @@ document.addEventListener("DOMContentLoaded", () => {
         datasets: [{
           label: 'Tickets Creados',
           data: datosCreados,
-          borderColor: '#667eea',
-          backgroundColor: 'rgba(102, 126, 234, 0.1)',
+          borderColor: '#3498db',
+          backgroundColor: 'rgba(52, 152, 219, 0.1)',
           tension: 0.4
         }, {
           label: 'Tickets Resueltos',
           data: datosResueltos,
-          borderColor: '#43e97b',
-          backgroundColor: 'rgba(67, 233, 123, 0.1)',
+          borderColor: '#27ae60',
+          backgroundColor: 'rgba(39, 174, 96, 0.1)',
           tension: 0.4
         }]
       },
@@ -438,7 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
     
     const labels = Object.keys(prioridades);
     const data = Object.values(prioridades);
-    const colors = ['#ef4444', '#f59e0b', '#10b981', '#3b82f6'];
+    const colors = ['#e74c3c', '#f39c12', '#27ae60', '#3498db'];
     
     if (charts.priorityChart) {
       charts.priorityChart.destroy();
@@ -503,11 +503,11 @@ document.addEventListener("DOMContentLoaded", () => {
         datasets: [{
           label: 'Asignados',
           data: datosAsignados,
-          backgroundColor: '#667eea'
+          backgroundColor: '#3498db'
         }, {
           label: 'Resueltos',
           data: datosResueltos,
-          backgroundColor: '#43e97b'
+          backgroundColor: '#27ae60'
         }]
       },
       options: {

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard KPI - Service Desk UTalca</title>
+  
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <!-- Pantalla de Inicio de Sesión -->
+  <div class="login-container" id="loginScreen">
+    <div class="login-header">
+      <h2><i class="fas fa-chart-line"></i> Dashboard KPI</h2>
+      <p>Service Desk - Universidad de Talca</p>
+    </div>
+    
+    <form id="loginForm">
+      <div class="input-group">
+        <label for="email">Correo electrónico:</label>
+        <div class="input-icon">
+          <i class="fas fa-envelope"></i>
+          <input type="email" id="email" placeholder="usuario@utalca.cl" required autocomplete="email" />
+        </div>
+      </div>
+      
+      <div class="input-group">
+        <label for="password">Contraseña:</label>
+        <div class="input-icon">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="password" placeholder="Contraseña" required autocomplete="current-password" />
+        </div>
+      </div>
+      
+      <button type="submit" class="btn-login">
+        <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+      </button>
+    </form>
+  </div>
+
+  <!-- Dashboard KPI -->
+  <div class="dashboard-container" id="dashboardScreen" style="display:none;">
+    <header class="app-header">
+      <div class="logo">
+        <i class="fas fa-chart-line"></i> Dashboard KPI - UTalca
+      </div>
+      <nav>
+        <ul>
+          <li><a href="index.html"><i class="fas fa-home"></i> Inicio</a></li>
+          <li><a href="guias.html"><i class="fas fa-book"></i> Guías</a></li>
+          <li><a href="#" class="active"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        </ul>
+      </nav>
+      <div class="user-info" id="userInfo">
+        <span id="userName"></span>
+        <button id="logoutButton">
+          <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+        </button>
+      </div>
+    </header>
+
+    <div class="dashboard-content">
+      <!-- Filtros de fecha -->
+      <div class="filters-section">
+        <div class="filter-group">
+          <label for="dateRange">Período:</label>
+          <select id="dateRange">
+            <option value="today">Hoy</option>
+            <option value="week">Esta semana</option>
+            <option value="month" selected>Este mes</option>
+            <option value="quarter">Este trimestre</option>
+            <option value="year">Este año</option>
+            <option value="custom">Personalizado</option>
+          </select>
+        </div>
+        <div class="filter-group" id="customDateRange" style="display:none;">
+          <label for="startDate">Desde:</label>
+          <input type="date" id="startDate">
+          <label for="endDate">Hasta:</label>
+          <input type="date" id="endDate">
+        </div>
+        <button id="refreshBtn" class="btn-refresh">
+          <i class="fas fa-sync-alt"></i> Actualizar
+        </button>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon">
+            <i class="fas fa-ticket-alt"></i>
+          </div>
+          <div class="kpi-content">
+            <h3 id="totalTickets">0</h3>
+            <p>Total de Tickets</p>
+            <div class="kpi-trend positive">
+              <i class="fas fa-arrow-up"></i>
+              <span id="ticketsTrend">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="kpi-content">
+            <h3 id="pendingTickets">0</h3>
+            <p>Tickets Pendientes</p>
+            <div class="kpi-trend negative">
+              <i class="fas fa-arrow-up"></i>
+              <span id="pendingTrend">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="kpi-content">
+            <h3 id="resolvedTickets">0</h3>
+            <p>Tickets Resueltos</p>
+            <div class="kpi-trend positive">
+              <i class="fas fa-arrow-up"></i>
+              <span id="resolvedTrend">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">
+            <i class="fas fa-stopwatch"></i>
+          </div>
+          <div class="kpi-content">
+            <h3 id="avgResolutionTime">0h</h3>
+            <p>Tiempo Promedio de Resolución</p>
+            <div class="kpi-trend positive">
+              <i class="fas fa-arrow-down"></i>
+              <span id="resolutionTrend">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">
+            <i class="fas fa-bullseye"></i>
+          </div>
+          <div class="kpi-content">
+            <h3 id="slaCompliance">0%</h3>
+            <p>Cumplimiento SLA</p>
+            <div class="kpi-trend positive">
+              <i class="fas fa-arrow-up"></i>
+              <span id="slaTrend">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon">
+            <i class="fas fa-user-clock"></i>
+          </div>
+          <div class="kpi-content">
+            <h3 id="firstResponseTime">0h</h3>
+            <p>Tiempo Primera Respuesta</p>
+            <div class="kpi-trend positive">
+              <i class="fas fa-arrow-down"></i>
+              <span id="responseTrend">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gráficos -->
+      <div class="charts-grid">
+        <div class="chart-container">
+          <h3><i class="fas fa-chart-pie"></i> Distribución por Servicio</h3>
+          <canvas id="serviceChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3><i class="fas fa-chart-line"></i> Evolución de Tickets</h3>
+          <canvas id="evolutionChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3><i class="fas fa-chart-bar"></i> Tickets por Prioridad</h3>
+          <canvas id="priorityChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <h3><i class="fas fa-chart-area"></i> Rendimiento por Agente</h3>
+          <canvas id="agentChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Tabla de Top Issues -->
+      <div class="table-section">
+        <h3><i class="fas fa-exclamation-triangle"></i> Principales Problemas</h3>
+        <div class="table-container">
+          <table id="topIssuesTable">
+            <thead>
+              <tr>
+                <th>Servicio</th>
+                <th>Tipo de Problema</th>
+                <th>Cantidad</th>
+                <th>% del Total</th>
+                <th>Tendencia</th>
+              </tr>
+            </thead>
+            <tbody id="topIssuesBody">
+              <!-- Se llenará dinámicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Métricas de Agente (solo para agentes) -->
+      <div class="agent-metrics" id="agentMetricsSection" style="display:none;">
+        <h3><i class="fas fa-user-cog"></i> Mis Métricas</h3>
+        <div class="agent-kpi-grid">
+          <div class="agent-kpi-card">
+            <h4>Tickets Asignados</h4>
+            <p id="myAssignedTickets">0</p>
+          </div>
+          <div class="agent-kpi-card">
+            <h4>Tickets Resueltos</h4>
+            <p id="myResolvedTickets">0</p>
+          </div>
+          <div class="agent-kpi-card">
+            <h4>Mi Tiempo Promedio</h4>
+            <p id="myAvgTime">0h</p>
+          </div>
+          <div class="agent-kpi-card">
+            <h4>Mi Cumplimiento SLA</h4>
+            <p id="mySLACompliance">0%</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  
+  <!-- Configuración de Firebase -->
+  <script src="firebase-config.js"></script>
+  
+  <!-- Script del Dashboard -->
+  <script src="dashboard.js"></script>
+</body>
+</html> 

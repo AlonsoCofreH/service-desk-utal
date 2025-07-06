@@ -1,0 +1,390 @@
+/* Estilos específicos para el Dashboard KPI */
+
+.dashboard-container {
+  min-height: 100vh;
+  background-color: var(--light-bg);
+}
+
+/* El header del dashboard usa los estilos del app-header de style.css */
+
+.dashboard-content {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Estilos adicionales para coherencia con el sistema */
+.dashboard-container .app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.dashboard-container .user-info button {
+  background-color: transparent;
+  border: 1px solid var(--white);
+  padding: 0.5rem 1rem;
+  color: var(--white);
+}
+
+.dashboard-container .user-info button:hover {
+  background-color: var(--white);
+  color: var(--secondary-color);
+}
+
+/* Filtros */
+.filters-section {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  box-shadow: var(--box-shadow);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: var(--secondary-color);
+  white-space: nowrap;
+}
+
+.filter-group select,
+.filter-group input {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--gray);
+  border-radius: var(--border-radius);
+  font-size: 0.9rem;
+  background-color: var(--white);
+  transition: var(--transition);
+}
+
+.filter-group select:focus,
+.filter-group input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.btn-refresh {
+  background-color: var(--primary-color);
+  color: var(--white);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-refresh:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.kpi-card {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  border-left: 4px solid var(--primary-color);
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: var(--white);
+  background-color: var(--primary-color);
+  flex-shrink: 0;
+}
+
+.kpi-content {
+  flex: 1;
+}
+
+.kpi-content h3 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--secondary-color);
+  margin: 0 0 0.25rem 0;
+}
+
+.kpi-content p {
+  color: var(--dark-gray);
+  margin: 0 0 0.5rem 0;
+  font-weight: 500;
+}
+
+.kpi-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.kpi-trend.positive {
+  color: var(--success);
+}
+
+.kpi-trend.negative {
+  color: var(--danger);
+}
+
+/* Gráficos */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.chart-container {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.chart-container h3 {
+  margin: 0 0 1rem 0;
+  color: var(--secondary-color);
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chart-container canvas {
+  max-height: 300px;
+}
+
+/* Tabla */
+.table-section {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  margin-bottom: 2rem;
+}
+
+.table-section h3 {
+  margin: 0 0 1rem 0;
+  color: var(--secondary-color);
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.table-container th,
+.table-container td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.table-container th {
+  background-color: var(--light-bg);
+  font-weight: 600;
+  color: var(--secondary-color);
+  position: sticky;
+  top: 0;
+}
+
+.table-container tr:hover {
+  background-color: var(--light-bg);
+}
+
+.table-container td {
+  color: var(--dark-gray);
+}
+
+/* Métricas de Agente */
+.agent-metrics {
+  background-color: var(--white);
+  padding: 1.5rem;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+}
+
+.agent-metrics h3 {
+  margin: 0 0 1rem 0;
+  color: var(--secondary-color);
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.agent-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.agent-kpi-card {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 1rem;
+  border-radius: var(--border-radius);
+  text-align: center;
+}
+
+.agent-kpi-card h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.agent-kpi-card p {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: 1rem;
+  }
+  
+  .dashboard-header {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .dashboard-header nav ul {
+    gap: 1rem;
+  }
+  
+  .filters-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .agent-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Animaciones */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.kpi-card,
+.chart-container,
+.table-section,
+.agent-metrics {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.kpi-card:nth-child(1) { animation-delay: 0.1s; }
+.kpi-card:nth-child(2) { animation-delay: 0.2s; }
+.kpi-card:nth-child(3) { animation-delay: 0.3s; }
+.kpi-card:nth-child(4) { animation-delay: 0.4s; }
+.kpi-card:nth-child(5) { animation-delay: 0.5s; }
+.kpi-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Estados de carga */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid var(--primary-color);
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Colores para diferentes tipos de servicios */
+.service-computadora { background-color: var(--primary-color); }
+.service-sap { background-color: var(--accent-color); }
+.service-biblioteca { background-color: var(--info); }
+.service-internet { background-color: var(--success); }
+.service-office365 { background-color: var(--warning); }
+.service-impresora { background-color: var(--primary-hover); }
+.service-access-point { background-color: var(--secondary-color); }
+.service-biometrico { background-color: var(--danger); } 

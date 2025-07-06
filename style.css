@@ -531,6 +531,10 @@ button i {
     padding: 1rem;
   }
   
+  .app-header nav ul {
+    gap: 1rem;
+  }
+  
   .user-info {
     flex-direction: column;
     gap: 0.5rem;
@@ -547,24 +551,33 @@ button i {
 }
 /* Navegación principal */
 nav {
-  background-color: var(--secondary-color); /* gris oscuro */
-  padding: 1rem 2rem;
-  box-shadow: var(--box-shadow);
+  display: flex;
+  align-items: center;
 }
 
 nav ul {
   list-style: none;
   display: flex;
   gap: 2rem;
+  margin: 0;
+  padding: 0;
 }
 
 nav ul li a {
   color: var(--white);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
   transition: var(--transition);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-nav ul li a:hover {
-  color: var(--primary-color); /* azul principal */
+nav ul li a:hover,
+nav ul li a.active {
+  background-color: var(--primary-color);
+  color: var(--white);
 }

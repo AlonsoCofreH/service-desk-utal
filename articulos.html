@@ -101,6 +101,26 @@
       background-color: #c0392b;
     }
 
+    /* Botón para crear artículos */
+    .btn-crear {
+      background-color: var(--primary-color);
+      color: var(--white);
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-crear:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .guias-contenido {
@@ -140,15 +160,22 @@
     <div class="guias-contenido">
       <h2><i class="fas fa-book"></i> Base de Conocimiento</h2>
       <p>Encuentra guías prácticas sobre los servicios tecnológicos de la universidad.</p>
-      
-      <!-- Indicador de estado de conexión -->
-      <div id="estadoConexion" style="margin-bottom: 1rem; padding: 0.5rem; border-radius: 4px; display: none;">
-        <i class="fas fa-wifi"></i> <span id="mensajeConexion"></span>
+
+      <!-- Botón para crear artículos (solo agentes) -->
+      <div id="botonCrearContainer" style="display:none; margin-bottom:2rem;">
+        <button id="toggleCrearArticulo" class="btn-crear">
+          <i class="fas fa-plus"></i> Crear Nuevo Artículo
+        </button>
       </div>
 
       <!-- Formulario para crear artículos (solo agentes) -->
-      <div id="crearArticuloContainer" style="display:none; margin-bottom:2rem;">
-        <h3><i class="fas fa-book-medical"></i> Crear Artículo</h3>
+      <div id="crearArticuloContainer" style="display:none; margin-bottom:2rem; background: #f8f9fa; padding: 1.5rem; border-radius: 8px; border: 1px solid #dee2e6;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h3><i class="fas fa-book-medical"></i> Crear Artículo</h3>
+          <button id="cerrarFormulario" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #6c757d;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
         <form id="articuloForm">
           <label for="categoriaArticulo">Categoría:</label>
           <select id="categoriaArticulo" required>
@@ -183,27 +210,6 @@
       <!-- Contenedor para artículos dinámicos desde Firebase -->
       <div id="contenedorArticulos">
         <!-- Los artículos se cargarán dinámicamente aquí -->
-        <!-- Fallback: artículos estáticos si no hay conexión -->
-        <div class="articulo">
-        <h3>Cómo configurar impresoras en red</h3>
-      <p class="meta">Publicado por <strong>Ana Torres</strong> el <em>12/06/2025</em></p>
-      <p>Este artículo te guía paso a paso para conectar una impresora a la red institucional. Puedes descargar la guía <a href="guias/manual de impresoras.pdf">aquí</a>.</p>
-      <div class="etiquetas">Visible para: Usuarios finales</div>
-    </div>
-
-      <div class="articulo">
-        <h3>Cómo instalar Microsoft 365 gratis con tu cuenta UTalca</h3>
-      <p class="meta">Publicado por <strong>Equipo TIC</strong> el <em>10/05/2025</em></p>
-      <p>Los estudiantes y funcionarios de la universidad tienen acceso gratuito a Word, Excel, PowerPoint y más. Consulta los pasos para descargar e instalar <a href="guias/office365_instalacion.pdf">aquí</a>.</p>
-      <div class="etiquetas">Visible para: Usuarios finales</div>
-    </div>
-
-      <div class="articulo">
-        <h3>Conéctate al Wi-Fi institucional desde tu celular o notebook</h3>
-      <p class="meta">Publicado por <strong>Conectividad UTalca</strong> el <em>18/03/2025</em></p>
-      <p>Esta guía te enseña a conectar tus dispositivos a la red segura de la universidad usando tus credenciales institucionales. Ver <a href="guias/wifi_utalca.pdf">instrucciones</a>.</p>
-      <div class="etiquetas">Visible para: Usuarios finales</div>
-    </div>
       </div>
     </div>
   </div>
@@ -223,6 +229,9 @@
       const logoutButton = document.getElementById("logoutButton");
       const contenedor = document.getElementById("contenedorArticulos");
       const crearArticuloContainer = document.getElementById("crearArticuloContainer");
+      const botonCrearContainer = document.getElementById("botonCrearContainer");
+      const toggleCrearArticulo = document.getElementById("toggleCrearArticulo");
+      const cerrarFormulario = document.getElementById("cerrarFormulario");
       const articuloForm = document.getElementById("articuloForm");
       
       // Verificar si hay usuario en localStorage
@@ -231,13 +240,9 @@
       if (currentUser) {
         userNameSpan.textContent = currentUser.email;
         
-        // Verificar conectividad con Firebase
-        const conectado = await verificarConectividadFirebase();
-        mostrarEstadoConexion(conectado);
-        
-        // Mostrar formulario solo a agentes
-        if (crearArticuloContainer) {
-          crearArticuloContainer.style.display = currentUser.role === "agente" ? "block" : "none";
+        // Mostrar botón de crear solo a agentes
+        if (botonCrearContainer) {
+          botonCrearContainer.style.display = currentUser.role === "agente" ? "block" : "none";
         }
         
         // Cargar artículos dinámicamente si existe el contenedor
@@ -265,6 +270,22 @@
           window.location.href = "index.html";
         }
       });
+
+      // Event listeners para el formulario de creación
+      if (toggleCrearArticulo) {
+        toggleCrearArticulo.addEventListener("click", () => {
+          crearArticuloContainer.style.display = "block";
+          botonCrearContainer.style.display = "none";
+        });
+      }
+
+      if (cerrarFormulario) {
+        cerrarFormulario.addEventListener("click", () => {
+          crearArticuloContainer.style.display = "none";
+          botonCrearContainer.style.display = "block";
+          articuloForm.reset();
+        });
+      }
       // Lógica de creación de artículos
       if (articuloForm) {
         articuloForm.addEventListener("submit", async function(e) {
@@ -310,6 +331,10 @@
             console.log("Artículo creado con ID:", docRef.id);
             alert("Artículo publicado exitosamente");
             articuloForm.reset();
+            
+            // Cerrar formulario y mostrar botón
+            crearArticuloContainer.style.display = "none";
+            botonCrearContainer.style.display = "block";
             
             // Recargar artículos
             await cargarArticulos(currentUser);
@@ -404,36 +429,7 @@
       }
     }
 
-    // Función para verificar conectividad con Firebase
-    async function verificarConectividadFirebase() {
-      try {
-        await firebase.firestore().collection("articulos").limit(1).get();
-        return true;
-      } catch (error) {
-        console.error("Error de conectividad con Firebase:", error);
-        return false;
-      }
-    }
 
-    // Función para mostrar el estado de conexión
-    function mostrarEstadoConexion(conectado) {
-      const estadoDiv = document.getElementById("estadoConexion");
-      const mensajeSpan = document.getElementById("mensajeConexion");
-      
-      if (conectado) {
-        estadoDiv.style.display = "block";
-        estadoDiv.style.backgroundColor = "#d4edda";
-        estadoDiv.style.color = "#155724";
-        estadoDiv.style.border = "1px solid #c3e6cb";
-        mensajeSpan.textContent = "Conectado a la base de datos";
-      } else {
-        estadoDiv.style.display = "block";
-        estadoDiv.style.backgroundColor = "#f8d7da";
-        estadoDiv.style.color = "#721c24";
-        estadoDiv.style.border = "1px solid #f5c6cb";
-        mensajeSpan.textContent = "Sin conexión a la base de datos - Mostrando contenido local";
-      }
-    }
 
     // Función para eliminar un artículo
     async function eliminarArticulo(id, btn) {

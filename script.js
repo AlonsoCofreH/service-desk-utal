@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const slaValue = document.getElementById("slaValue");
   const ticketService = document.getElementById("ticketService");
   const ticketType = document.getElementById("ticketType");
+  const articuloForm = document.getElementById("articuloForm");
 
   const serviciosPorCategoria = {
     "Computadora": {
@@ -110,6 +111,40 @@ document.addEventListener("DOMContentLoaded", () => {
   ticketService.addEventListener("change", handleServiceChange);
   ticketType.addEventListener("change", handleTypeChange);
   
+  if (articuloForm) {
+    articuloForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const categoria = document.getElementById("categoriaArticulo").value.trim();
+      const contenido = document.getElementById("contenidoArticulo").value.trim();
+      const dirigidoA = document.getElementById("dirigidoA").value;
+      const fechaVencimiento = document.getElementById("fechaVencimiento").value;
+      if (!categoria || !contenido || !dirigidoA) {
+        mostrarMensaje("Por favor, completa todos los campos obligatorios del artículo", "error");
+        return;
+      }
+      const nuevoArticulo = {
+        categoria,
+        contenido,
+        dirigidoA,
+        fechaVencimiento: fechaVencimiento ? firebase.firestore.Timestamp.fromDate(new Date(fechaVencimiento)) : null,
+        creadoPor: currentUser ? currentUser.email : ""
+      };
+      try {
+        // Usar función centralizada para crear artículo
+        const resultado = await crearArticuloFirebase(nuevoArticulo);
+        if (resultado.exito) {
+          mostrarMensaje("Artículo publicado exitosamente", "success");
+          articuloForm.reset();
+        } else {
+          mostrarMensaje(resultado.mensaje || "Error al publicar el artículo", "error");
+        }
+      } catch (error) {
+        console.error("Error al crear artículo:", error);
+        mostrarMensaje("Error al publicar el artículo", "error");
+      }
+    });
+  }
+
   // Funciones principales
   async function handleLogin(e) {
     e.preventDefault();
@@ -737,6 +772,11 @@ document.addEventListener("DOMContentLoaded", () => {
       mostrarModalDetalles(ticket);
     }
   };
+
+  if (user.role === "agente") {
+  document.getElementById("crearArticuloContainer").style.display = "block";
+}
+
 
   function mostrarModalDetalles(ticket) {
     const modal = document.createElement("div");

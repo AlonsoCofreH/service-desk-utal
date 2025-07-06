@@ -62,6 +62,30 @@
       </div>
     </header>
 
+    <!-- Formulario para crear artículos - inicialmente oculto -->
+    <div class="crear-articulo" id="crearArticuloContainer" style="display: none;">
+      <h2><i class="fas fa-book-medical"></i> Crear Artículo</h2>
+      <form id="articuloForm">
+        <label for="categoriaArticulo">Categoría:</label>
+        <input type="text" id="categoriaArticulo" required />
+
+        <label for="contenidoArticulo">Contenido:</label>
+        <textarea id="contenidoArticulo" required></textarea>
+
+        <label for="dirigidoA">Dirigido a:</label>
+        <select id="dirigidoA" required>
+          <option value="usuario">Usuarios</option>
+          <option value="agente">Agentes</option>
+        </select>
+
+        <label for="fechaVencimiento">Fecha de vencimiento:</label>
+        <input type="date" id="fechaVencimiento" />
+
+        <button type="submit"><i class="fas fa-save"></i> Publicar Artículo</button>
+      </form>
+    </div>
+
+
     <div class="dashboard">
       <!-- Formulario para crear tickets -->
       <div class="ticket-form" id="ticketFormContainer">

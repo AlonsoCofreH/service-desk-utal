@@ -218,3 +218,37 @@ async function obtenerTicketsAsignados(email) {
     throw error;
   }
 }
+// Colección de artículos
+const articulosCollection = db.collection("articulos");
+
+// Crear artículo
+async function crearArticuloFirebase(articulo) {
+  try {
+    const docRef = await articulosCollection.add({
+      ...articulo,
+      fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    return { exito: true, id: docRef.id };
+  } catch (error) {
+    console.error("Error al crear artículo:", error);
+    return { exito: false, mensaje: error.message };
+  }
+}
+
+// Obtener artículos visibles para el tipo de usuario
+async function obtenerArticulosPorTipo(tipoUsuario) {
+  try {
+    const snapshot = await articulosCollection
+      .where("dirigidoA", "==", tipoUsuario)
+      .orderBy("fechaCreacion", "desc")
+      .get();
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (error) {
+    console.error("Error al obtener artículos:", error);
+    return [];
+  }
+}

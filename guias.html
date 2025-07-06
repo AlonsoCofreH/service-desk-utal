@@ -76,6 +76,31 @@
       border-left: 5px solid var(--danger);
     }
 
+    /* Botones de gestión para agentes */
+    .btn-editar, .btn-eliminar {
+      background-color: var(--primary-color);
+      color: var(--white);
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      margin-right: 0.5rem;
+      font-size: 0.9rem;
+      transition: var(--transition);
+    }
+
+    .btn-editar:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-eliminar {
+      background-color: var(--danger);
+    }
+
+    .btn-eliminar:hover {
+      background-color: #c0392b;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       .guias-contenido {
@@ -116,7 +141,11 @@
       <h2><i class="fas fa-book"></i> Base de Conocimiento</h2>
       <p>Encuentra guías prácticas sobre los servicios tecnológicos de la universidad.</p>
 
-      <div class="articulo">
+      <!-- Contenedor para artículos dinámicos desde Firebase -->
+      <div id="contenedorArticulos">
+        <!-- Los artículos se cargarán dinámicamente aquí -->
+        <!-- Fallback: artículos estáticos si no hay conexión -->
+        <div class="articulo">
         <h3>Cómo configurar impresoras en red</h3>
       <p class="meta">Publicado por <strong>Ana Torres</strong> el <em>12/06/2025</em></p>
       <p>Este artículo te guía paso a paso para conectar una impresora a la red institucional. Puedes descargar la guía <a href="guias/manual de impresoras.pdf">aquí</a>.</p>
@@ -136,7 +165,7 @@
       <p>Esta guía te enseña a conectar tus dispositivos a la red segura de la universidad usando tus credenciales institucionales. Ver <a href="guias/wifi_utalca.pdf">instrucciones</a>.</p>
       <div class="etiquetas">Visible para: Usuarios finales</div>
     </div>
-
+      </div>
     </div>
   </div>
 
@@ -150,15 +179,21 @@
   
   <!-- Script para guías -->
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       const userNameSpan = document.getElementById("userName");
       const logoutButton = document.getElementById("logoutButton");
+      const contenedor = document.getElementById("contenedorArticulos");
       
       // Verificar si hay usuario en localStorage
       let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
       
       if (currentUser) {
         userNameSpan.textContent = currentUser.email;
+        
+        // Cargar artículos dinámicamente si existe el contenedor
+        if (contenedor) {
+          await cargarArticulos(currentUser);
+        }
       } else {
         // Si no hay usuario, redirigir al login
         window.location.href = "index.html";
@@ -183,6 +218,106 @@
         }
       });
     });
+
+    // Función para cargar artículos dinámicamente
+    async function cargarArticulos(currentUser) {
+      const contenedor = document.getElementById("contenedorArticulos");
+      
+      if (!contenedor) return;
+
+      const tipo = currentUser.role === "agente" ? "agente" : "usuario";
+      const esAgente = currentUser.role === "agente";
+
+      try {
+        const articulos = await obtenerArticulosPorTipo(tipo);
+
+        if (!articulos.length) {
+          contenedor.innerHTML = "<p>No hay artículos disponibles para tu perfil.</p>";
+          return;
+        }
+
+        contenedor.innerHTML = "";
+
+        articulos.forEach(art => {
+          const fecha = art.fechaCreacion?.toDate?.().toLocaleDateString("es-CL") || "Desconocida";
+          const vencido = art.fechaVencimiento && new Date(art.fechaVencimiento.toDate?.()) < new Date();
+          const claseVencido = vencido ? "despublicado" : "";
+
+          const div = document.createElement("div");
+          div.className = `articulo ${claseVencido}`;
+          div.innerHTML = `
+            <h3>${art.categoria}</h3>
+            <p class="meta">Publicado por <strong>${art.autor}</strong> el <em>${fecha}</em></p>
+            <p class="contenido">${art.contenido}</p>
+            <div class="etiquetas">Visible para: ${art.dirigidoA === "agente" ? "Agentes" : "Usuarios"}</div>
+            ${esAgente ? `
+              <div style="margin-top: 1rem;">
+                <button class="btn-editar" onclick="editarArticulo('${art.id}', this)">✏️ Editar</button>
+                <button class="btn-eliminar" onclick="eliminarArticulo('${art.id}', this)">🗑️ Eliminar</button>
+              </div>
+            ` : ''}
+          `;
+          contenedor.appendChild(div);
+        });
+      } catch (error) {
+        console.error("Error al cargar artículos:", error);
+        contenedor.innerHTML = "<p>Error al cargar los artículos.</p>";
+      }
+    }
+
+    // Función para obtener artículos por tipo de usuario
+    async function obtenerArticulosPorTipo(tipo) {
+      try {
+        const snapshot = await firebase.firestore()
+          .collection("articulos")
+          .where("dirigidoA", "in", [tipo, "ambos"])
+          .orderBy("fechaCreacion", "desc")
+          .get();
+        
+        return snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+      } catch (error) {
+        console.error("Error al obtener artículos:", error);
+        return [];
+      }
+    }
+
+    // Función para eliminar un artículo
+    async function eliminarArticulo(id, btn) {
+      if (!confirm("¿Estás seguro de eliminar este artículo?")) return;
+
+      try {
+        await firebase.firestore().collection("articulos").doc(id).delete();
+        btn.closest(".articulo").remove();
+        alert("Artículo eliminado.");
+      } catch (e) {
+        console.error("Error al eliminar:", e);
+        alert("No se pudo eliminar.");
+      }
+    }
+
+    // Función para editar un artículo
+    async function editarArticulo(id, btn) {
+      const contenedor = btn.closest(".articulo");
+      const parrafo = contenedor.querySelector(".contenido");
+      const textoActual = parrafo.textContent;
+
+      const nuevoContenido = prompt("Editar contenido del artículo:", textoActual);
+      if (nuevoContenido === null || nuevoContenido.trim() === "") return;
+
+      try {
+        await firebase.firestore().collection("articulos").doc(id).update({
+          contenido: nuevoContenido
+        });
+        parrafo.textContent = nuevoContenido;
+        alert("Artículo actualizado.");
+      } catch (e) {
+        console.error("Error al actualizar:", e);
+        alert("No se pudo actualizar.");
+      }
+    }
   </script>
 </body>
 </html>

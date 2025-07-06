@@ -98,9 +98,18 @@ document.addEventListener("DOMContentLoaded", () => {
   // Ya no necesitamos cargar tickets desde localStorage
   // let tickets = JSON.parse(localStorage.getItem("tickets")) || [];
 
-  // Si hay un usuario en localStorage, iniciar sesión automáticamente
+  // Variable para controlar si ya se ha iniciado sesión
+  let sesionIniciada = false;
+  
+  // Si hay un usuario en localStorage, verificar si Firebase Auth también está autenticado
   if (currentUser) {
-    iniciarSesion(currentUser);
+    // Esperar a que Firebase Auth se inicialice antes de verificar
+    auth.onAuthStateChanged((user) => {
+      if (user && user.email === currentUser.email && !sesionIniciada) {
+        sesionIniciada = true;
+        iniciarSesion(currentUser);
+      }
+    });
   }
 
   // Event Listeners
@@ -190,8 +199,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Escuchar cambios en el estado de autenticación
   auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      // Usuario ha iniciado sesión
+    if (user && !sesionIniciada) {
+      // Usuario ha iniciado sesión y no se ha iniciado sesión antes
       const verificacion = await verificarUsuarioAutorizado(user.email);
       if (verificacion.autorizado) {
         currentUser = {
@@ -199,14 +208,16 @@ document.addEventListener("DOMContentLoaded", () => {
           role: verificacion.rol
         };
         localStorage.setItem("currentUser", JSON.stringify(currentUser));
+        sesionIniciada = true;
         iniciarSesion(currentUser);
       } else {
         // Si el usuario no está autorizado, cerrar sesión
         await auth.signOut();
         mostrarMensaje(verificacion.mensaje, "error");
       }
-    } else {
+    } else if (!user) {
       // Usuario ha cerrado sesión
+      sesionIniciada = false;
       handleLogout();
     }
   });
@@ -231,6 +242,10 @@ document.addEventListener("DOMContentLoaded", () => {
     userNameSpan.textContent = user.email;
     loginScreen.style.display = "none";
     appScreen.style.display = "block";
+
+    // Limpiar contenedores antes de cargar
+    ticketList.innerHTML = "";
+    unassignedTickets.innerHTML = "";
 
     if (user.role === "agente") {
       console.log("Configurando vista de agente");
@@ -435,6 +450,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function mostrarTickets() {
+    // Limpiar contenedor antes de cargar
     ticketList.innerHTML = "";
     
     try {
@@ -445,7 +461,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       
-      misTickets.forEach(ticket => {
+      // Verificar que no haya duplicados por ID
+      const ticketsUnicos = misTickets.filter((ticket, index, self) => 
+        index === self.findIndex(t => t.id === ticket.id)
+      );
+      
+      ticketsUnicos.forEach(ticket => {
         const div = crearElementoTicket(ticket, "usuario");
         ticketList.appendChild(div);
       });
@@ -456,6 +477,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function mostrarTicketsSinAsignar() {
+    // Limpiar contenedor antes de cargar
     unassignedTickets.innerHTML = "";
     
     try {
@@ -468,7 +490,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       
-      ticketsSinAsignar.forEach(ticket => {
+      // Verificar que no haya duplicados por ID
+      const ticketsUnicos = ticketsSinAsignar.filter((ticket, index, self) => 
+        index === self.findIndex(t => t.id === ticket.id)
+      );
+      
+      ticketsUnicos.forEach(ticket => {
         console.log("Procesando ticket sin asignar:", ticket);
         const div = crearElementoTicket(ticket, "agente-sinasignar");
         unassignedTickets.appendChild(div);
@@ -480,6 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function mostrarTicketsAsignados() {
+    // Limpiar contenedor antes de cargar
     ticketList.innerHTML = "";
     
     try {
@@ -492,7 +520,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       
-      ticketsAsignados.forEach(ticket => {
+      // Verificar que no haya duplicados por ID
+      const ticketsUnicos = ticketsAsignados.filter((ticket, index, self) => 
+        index === self.findIndex(t => t.id === ticket.id)
+      );
+      
+      ticketsUnicos.forEach(ticket => {
         console.log("Procesando ticket asignado:", ticket);
         const div = crearElementoTicket(ticket, "agente-asignado");
         ticketList.appendChild(div);

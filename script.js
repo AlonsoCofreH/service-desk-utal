@@ -102,15 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let sesionIniciada = false;
   
   // Si hay un usuario en localStorage, verificar si Firebase Auth también está autenticado
-  if (currentUser) {
-    // Esperar a que Firebase Auth se inicialice antes de verificar
-    auth.onAuthStateChanged((user) => {
-      if (user && user.email === currentUser.email && !sesionIniciada) {
-        sesionIniciada = true;
-        iniciarSesion(currentUser);
-      }
-    });
-  }
+  // Esta verificación se manejará en el listener onAuthStateChanged principal
 
   // Event Listeners
   loginForm.addEventListener("submit", handleLogin);
@@ -154,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Guardar en localStorage
       localStorage.setItem("currentUser", JSON.stringify(currentUser));
       
-      iniciarSesion(currentUser);
+      // No llamar a iniciarSesion aquí, se manejará en onAuthStateChanged
       mostrarMensaje("Inicio de sesión exitoso", "success");
     } catch (error) {
       console.error("Error de autenticación:", error);
@@ -215,8 +207,8 @@ document.addEventListener("DOMContentLoaded", () => {
         await auth.signOut();
         mostrarMensaje(verificacion.mensaje, "error");
       }
-    } else if (!user) {
-      // Usuario ha cerrado sesión
+    } else if (!user && sesionIniciada) {
+      // Usuario ha cerrado sesión y la sesión estaba iniciada
       sesionIniciada = false;
       handleLogout();
     }
@@ -227,6 +219,12 @@ document.addEventListener("DOMContentLoaded", () => {
       await auth.signOut();
       currentUser = null;
       localStorage.removeItem("currentUser");
+      
+      // Limpiar completamente el estado
+      sesionIniciada = false;
+      ticketList.innerHTML = "";
+      unassignedTickets.innerHTML = "";
+      
       loginScreen.style.display = "block";
       appScreen.style.display = "none";
       document.getElementById("loginForm").reset();
@@ -239,6 +237,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function iniciarSesion(user) {
     console.log("Iniciando sesión como:", user);
+    
+    // Verificar que no se haya iniciado sesión ya
+    if (sesionIniciada && appScreen.style.display !== "none") {
+      console.log("Sesión ya iniciada, evitando duplicación");
+      return;
+    }
+    
     userNameSpan.textContent = user.email;
     loginScreen.style.display = "none";
     appScreen.style.display = "block";
@@ -466,9 +471,14 @@ document.addEventListener("DOMContentLoaded", () => {
         index === self.findIndex(t => t.id === ticket.id)
       );
       
+      // Verificar que no existan elementos duplicados en el DOM
+      const ticketsExistentes = new Set();
       ticketsUnicos.forEach(ticket => {
-        const div = crearElementoTicket(ticket, "usuario");
-        ticketList.appendChild(div);
+        if (!ticketsExistentes.has(ticket.id)) {
+          ticketsExistentes.add(ticket.id);
+          const div = crearElementoTicket(ticket, "usuario");
+          ticketList.appendChild(div);
+        }
       });
     } catch (error) {
       console.error("Error al mostrar tickets:", error);
@@ -495,10 +505,15 @@ document.addEventListener("DOMContentLoaded", () => {
         index === self.findIndex(t => t.id === ticket.id)
       );
       
+      // Verificar que no existan elementos duplicados en el DOM
+      const ticketsExistentes = new Set();
       ticketsUnicos.forEach(ticket => {
-        console.log("Procesando ticket sin asignar:", ticket);
-        const div = crearElementoTicket(ticket, "agente-sinasignar");
-        unassignedTickets.appendChild(div);
+        if (!ticketsExistentes.has(ticket.id)) {
+          ticketsExistentes.add(ticket.id);
+          console.log("Procesando ticket sin asignar:", ticket);
+          const div = crearElementoTicket(ticket, "agente-sinasignar");
+          unassignedTickets.appendChild(div);
+        }
       });
     } catch (error) {
       console.error("Error al mostrar tickets sin asignar:", error);
@@ -525,10 +540,15 @@ document.addEventListener("DOMContentLoaded", () => {
         index === self.findIndex(t => t.id === ticket.id)
       );
       
+      // Verificar que no existan elementos duplicados en el DOM
+      const ticketsExistentes = new Set();
       ticketsUnicos.forEach(ticket => {
-        console.log("Procesando ticket asignado:", ticket);
-        const div = crearElementoTicket(ticket, "agente-asignado");
-        ticketList.appendChild(div);
+        if (!ticketsExistentes.has(ticket.id)) {
+          ticketsExistentes.add(ticket.id);
+          console.log("Procesando ticket asignado:", ticket);
+          const div = crearElementoTicket(ticket, "agente-asignado");
+          ticketList.appendChild(div);
+        }
       });
     } catch (error) {
       console.error("Error al mostrar tickets asignados:", error);

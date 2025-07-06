@@ -140,6 +140,11 @@
     <div class="guias-contenido">
       <h2><i class="fas fa-book"></i> Base de Conocimiento</h2>
       <p>Encuentra guías prácticas sobre los servicios tecnológicos de la universidad.</p>
+      
+      <!-- Indicador de estado de conexión -->
+      <div id="estadoConexion" style="margin-bottom: 1rem; padding: 0.5rem; border-radius: 4px; display: none;">
+        <i class="fas fa-wifi"></i> <span id="mensajeConexion"></span>
+      </div>
 
       <!-- Formulario para crear artículos (solo agentes) -->
       <div id="crearArticuloContainer" style="display:none; margin-bottom:2rem;">
@@ -225,10 +230,16 @@
       
       if (currentUser) {
         userNameSpan.textContent = currentUser.email;
+        
+        // Verificar conectividad con Firebase
+        const conectado = await verificarConectividadFirebase();
+        mostrarEstadoConexion(conectado);
+        
         // Mostrar formulario solo a agentes
         if (crearArticuloContainer) {
           crearArticuloContainer.style.display = currentUser.role === "agente" ? "block" : "none";
         }
+        
         // Cargar artículos dinámicamente si existe el contenedor
         if (contenedor) {
           await cargarArticulos(currentUser);
@@ -258,33 +269,59 @@
       if (articuloForm) {
         articuloForm.addEventListener("submit", async function(e) {
           e.preventDefault();
+          
+          // Obtener valores del formulario
           const categoria = document.getElementById("categoriaArticulo").value.trim();
           const contenido = document.getElementById("contenidoArticulo").value.trim();
           const dirigidoA = document.getElementById("dirigidoA").value;
           const fechaVencimiento = document.getElementById("fechaVencimiento").value;
-          // Normalizar valor para Firestore
-          let dirigidoAValue = dirigidoA;
-          if (dirigidoA === "todos") dirigidoAValue = "todos";
+          
+          // Validar campos obligatorios
           if (!categoria || !contenido || !dirigidoA) {
             alert("Por favor, completa todos los campos obligatorios del artículo");
             return;
           }
+          
+          // Normalizar valor para Firestore
+          let dirigidoAValue = dirigidoA;
+          if (dirigidoA === "todos") dirigidoAValue = "todos";
+          
+          // Crear objeto del artículo
           const nuevoArticulo = {
             categoria,
             contenido,
             dirigidoA: dirigidoAValue,
             autor: currentUser.email,
             fechaCreacion: firebase.firestore.FieldValue.serverTimestamp(),
-            fechaVencimiento: fechaVencimiento ? firebase.firestore.Timestamp.fromDate(new Date(fechaVencimiento)) : null
+            fechaVencimiento: fechaVencimiento ? firebase.firestore.Timestamp.fromDate(new Date(fechaVencimiento)) : null,
+            activo: true
           };
+          
           try {
-            await firebase.firestore().collection("articulos").add(nuevoArticulo);
+            // Mostrar loading en el botón
+            const submitBtn = articuloForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publicando...';
+            submitBtn.disabled = true;
+            
+            // Guardar en Firebase
+            const docRef = await firebase.firestore().collection("articulos").add(nuevoArticulo);
+            
+            console.log("Artículo creado con ID:", docRef.id);
             alert("Artículo publicado exitosamente");
             articuloForm.reset();
+            
+            // Recargar artículos
             await cargarArticulos(currentUser);
+            
           } catch (error) {
             console.error("Error al crear artículo:", error);
-            alert("Error al publicar el artículo");
+            alert("Error al publicar el artículo: " + error.message);
+          } finally {
+            // Restaurar botón
+            const submitBtn = articuloForm.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
           }
         });
       }
@@ -294,21 +331,30 @@
     async function cargarArticulos(currentUser) {
       const contenedor = document.getElementById("contenedorArticulos");
       if (!contenedor) return;
+      
       const tipo = currentUser.role === "agente" ? "agente" : "usuario";
       const esAgente = currentUser.role === "agente";
+      
       try {
-        // Mostrar artículos dirigidos al tipo de usuario o a todos
+        // Mostrar loading
+        contenedor.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Cargando artículos...</p>';
+        
+        // Obtener artículos dirigidos al tipo de usuario o a todos
         const articulos = await obtenerArticulosPorTipo(tipo);
+        
         if (!articulos.length) {
           contenedor.innerHTML = "<p>No hay artículos disponibles para tu perfil.</p>";
           return;
         }
+        
         contenedor.innerHTML = "";
+        
         articulos.forEach(art => {
           const fecha = art.fechaCreacion?.toDate?.().toLocaleDateString("es-CL") || "Desconocida";
           const vencido = art.fechaVencimiento && new Date(art.fechaVencimiento.toDate?.()) < new Date();
           const claseVencido = vencido ? "despublicado" : "";
           const vencidoLabel = vencido ? '<span style="color:red;font-weight:bold;">(Vencido)</span>' : '';
+          
           const div = document.createElement("div");
           div.className = `articulo ${claseVencido}`;
           div.innerHTML = `
@@ -325,41 +371,93 @@
           `;
           contenedor.appendChild(div);
         });
+        
+        console.log(`Artículos cargados exitosamente: ${articulos.length} artículos`);
       } catch (error) {
         console.error("Error al cargar artículos:", error);
-        contenedor.innerHTML = "<p>Error al cargar los artículos.</p>";
+        contenedor.innerHTML = "<p>Error al cargar los artículos. Por favor, intenta de nuevo.</p>";
       }
     }
 
     // Función para obtener artículos por tipo de usuario
     async function obtenerArticulosPorTipo(tipo) {
       try {
+        console.log("Obteniendo artículos para tipo:", tipo);
+        
         const snapshot = await firebase.firestore()
           .collection("articulos")
           .where("dirigidoA", "in", [tipo, "todos"])
+          .where("activo", "==", true) // Solo artículos activos
           .orderBy("fechaCreacion", "desc")
           .get();
-        return snapshot.docs.map(doc => ({
+        
+        const articulos = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
+        
+        console.log(`Artículos encontrados: ${articulos.length}`);
+        return articulos;
       } catch (error) {
         console.error("Error al obtener artículos:", error);
-        return [];
+        throw error; // Re-lanzar el error para manejarlo en la función llamadora
+      }
+    }
+
+    // Función para verificar conectividad con Firebase
+    async function verificarConectividadFirebase() {
+      try {
+        await firebase.firestore().collection("articulos").limit(1).get();
+        return true;
+      } catch (error) {
+        console.error("Error de conectividad con Firebase:", error);
+        return false;
+      }
+    }
+
+    // Función para mostrar el estado de conexión
+    function mostrarEstadoConexion(conectado) {
+      const estadoDiv = document.getElementById("estadoConexion");
+      const mensajeSpan = document.getElementById("mensajeConexion");
+      
+      if (conectado) {
+        estadoDiv.style.display = "block";
+        estadoDiv.style.backgroundColor = "#d4edda";
+        estadoDiv.style.color = "#155724";
+        estadoDiv.style.border = "1px solid #c3e6cb";
+        mensajeSpan.textContent = "Conectado a la base de datos";
+      } else {
+        estadoDiv.style.display = "block";
+        estadoDiv.style.backgroundColor = "#f8d7da";
+        estadoDiv.style.color = "#721c24";
+        estadoDiv.style.border = "1px solid #f5c6cb";
+        mensajeSpan.textContent = "Sin conexión a la base de datos - Mostrando contenido local";
       }
     }
 
     // Función para eliminar un artículo
     async function eliminarArticulo(id, btn) {
-      if (!confirm("¿Estás seguro de eliminar este artículo?")) return;
+      if (!confirm("¿Estás seguro de eliminar este artículo? Esta acción no se puede deshacer.")) return;
 
       try {
+        // Mostrar loading
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Eliminando...';
+        btn.disabled = true;
+        
         await firebase.firestore().collection("articulos").doc(id).delete();
+        
+        // Remover del DOM
         btn.closest(".articulo").remove();
-        alert("Artículo eliminado.");
-      } catch (e) {
-        console.error("Error al eliminar:", e);
-        alert("No se pudo eliminar.");
+        alert("Artículo eliminado exitosamente.");
+        
+        console.log("Artículo eliminado con ID:", id);
+      } catch (error) {
+        console.error("Error al eliminar artículo:", error);
+        alert("Error al eliminar el artículo: " + error.message);
+        
+        // Restaurar botón
+        btn.innerHTML = '🗑️ Eliminar';
+        btn.disabled = false;
       }
     }
 
@@ -373,14 +471,26 @@
       if (nuevoContenido === null || nuevoContenido.trim() === "") return;
 
       try {
+        // Mostrar loading
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        btn.disabled = true;
+        
         await firebase.firestore().collection("articulos").doc(id).update({
-          contenido: nuevoContenido
+          contenido: nuevoContenido,
+          fechaModificacion: firebase.firestore.FieldValue.serverTimestamp()
         });
+        
         parrafo.textContent = nuevoContenido;
-        alert("Artículo actualizado.");
-      } catch (e) {
-        console.error("Error al actualizar:", e);
-        alert("No se pudo actualizar.");
+        alert("Artículo actualizado exitosamente.");
+        
+        console.log("Artículo actualizado con ID:", id);
+      } catch (error) {
+        console.error("Error al actualizar artículo:", error);
+        alert("Error al actualizar el artículo: " + error.message);
+      } finally {
+        // Restaurar botón
+        btn.innerHTML = '✏️ Editar';
+        btn.disabled = false;
       }
     }
   </script>

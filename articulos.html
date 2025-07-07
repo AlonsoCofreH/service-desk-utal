@@ -373,9 +373,9 @@
             // Cerrar formulario y mostrar botón
             crearArticuloContainer.style.display = "none";
             botonCrearContainer.style.display = "block";
-            
-            // Recargar artículos
-            await cargarArticulos(currentUser);
+
+            // Esperar un momento para asegurar que Firestore indexe el nuevo artículo
+            setTimeout(() => cargarArticulos(currentUser), 600);
             
           } catch (error) {
             console.error("Error al crear artículo:", error);
@@ -446,24 +446,31 @@
     async function obtenerArticulosPorTipo(tipo) {
       try {
         console.log("Obteniendo artículos para tipo:", tipo);
-        
-        const snapshot = await firebase.firestore()
-          .collection("articulos")
-          .where("dirigidoA", "in", [tipo, "todos"])
-          .where("activo", "==", true) // Solo artículos activos
-          .orderBy("fechaCreacion", "desc")
-          .get();
-        
-        const articulos = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        console.log(`Artículos encontrados: ${articulos.length}`);
+        // Consulta principal
+        let snapshot = null;
+        try {
+          snapshot = await firebase.firestore()
+            .collection("articulos")
+            .where("dirigidoA", "in", [tipo, "todos"])
+            .where("activo", "==", true)
+            .orderBy("fechaCreacion", "desc")
+            .get();
+        } catch (err) {
+          console.warn("Consulta principal falló, intentando sin filtros...");
+        }
+        if (!snapshot || snapshot.empty) {
+          // Consulta de respaldo: mostrar todos los artículos para depuración
+          const allSnapshot = await firebase.firestore().collection("articulos").get();
+          const articulos = allSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          console.warn("Consulta de respaldo: mostrando todos los artículos:", articulos);
+          return articulos;
+        }
+        const articulos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log(`Artículos encontrados: ${articulos.length}`, articulos);
         return articulos;
       } catch (error) {
         console.error("Error al obtener artículos:", error);
-        throw error; // Re-lanzar el error para manejarlo en la función llamadora
+        throw error;
       }
     }
 

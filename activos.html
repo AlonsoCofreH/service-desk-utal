@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Activos de TI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="logo" style="display:flex;align-items:center;gap:0.5rem;">
+      <img src="utal.png" alt="Logo Universidad de Talca" style="max-width:110px;max-height:110px;vertical-align:middle;" />
+    </div>
+    <nav class="dropdown-nav">
+      <button id="menuToggle" class="menu-toggle"><i class="fas fa-bars"></i> Menú</button>
+      <ul id="mainMenu" class="dropdown-menu">
+        <li><a href="index.html"><i class="fas fa-home"></i> Inicio</a></li>
+        <li><a href="articulos.html"><i class="fas fa-book"></i> Artículos</a></li>
+        <li><a href="dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        <li><a href="cambios.html"><i class="fas fa-exchange-alt"></i> Cambios</a></li>
+        <li><a href="activos.html" class="active"><i class="fas fa-desktop"></i> Activos</a></li>
+      </ul>
+    </nav>
+    <div class="user-info" id="userInfo">
+      <span id="userName"></span>
+      <button id="logoutButton">
+        <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+      </button>
+    </div>
+  </header>
+  <div class="dashboard">
+    <div class="activos-contenido">
+      <h2><i class="fas fa-desktop"></i> Gestión de Activos de Hardware</h2>
+      <!-- Formulario para registrar activos (solo agentes) -->
+      <div id="crearActivoContainer" style="display:none; margin-bottom:2rem;">
+        <h3><i class="fas fa-plus"></i> Registrar Activo</h3>
+        <form id="activoForm">
+          <label for="tipoActivo">Tipo de hardware:</label>
+          <select id="tipoActivo" required>
+            <option value="">Selecciona un tipo</option>
+            <option value="PC">PC</option>
+            <option value="Notebook">Notebook</option>
+            <option value="Impresora">Impresora</option>
+            <option value="Tablet">Tablet</option>
+            <option value="Switch">Switch</option>
+            <option value="Router">Router</option>
+            <option value="Access Point">Access Point</option>
+            <option value="Firewall">Firewall</option>
+            <option value="Servidor">Servidor</option>
+            <option value="Otro">Otro</option>
+          </select>
+          <label for="fechaAdquisicion">Fecha de adquisición:</label>
+          <input type="date" id="fechaAdquisicion" required />
+          <label for="estadoActivo">Estado:</label>
+          <select id="estadoActivo" required>
+            <option value="operativo">Operativo</option>
+            <option value="obsoleto">Obsoleto</option>
+          </select>
+          <label for="marcaActivo">Marca:</label>
+          <input type="text" id="marcaActivo" required />
+          <label for="modeloActivo">Modelo:</label>
+          <input type="text" id="modeloActivo" required />
+          <label for="serieActivo">Número de serie:</label>
+          <input type="text" id="serieActivo" required />
+          <label for="usuarioResponsable">Usuario responsable:</label>
+          <input type="text" id="usuarioResponsable" required />
+          <button type="submit"><i class="fas fa-save"></i> Registrar Activo</button>
+        </form>
+      </div>
+      <!-- Listado de activos -->
+      <div id="listaActivosContainer">
+        <h3><i class="fas fa-list"></i> Activos Registrados</h3>
+        <div id="listaActivos"></div>
+      </div>
+    </div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const userNameSpan = document.getElementById("userName");
+      const logoutButton = document.getElementById("logoutButton");
+      const crearActivoContainer = document.getElementById("crearActivoContainer");
+      const activoForm = document.getElementById("activoForm");
+      const listaActivos = document.getElementById("listaActivos");
+      let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+      if (currentUser) {
+        userNameSpan.textContent = currentUser.email;
+        if (crearActivoContainer) {
+          crearActivoContainer.style.display = currentUser.role === "agente" ? "block" : "none";
+        }
+        await cargarActivos(currentUser);
+      } else {
+        window.location.href = "index.html";
+      }
+      logoutButton.addEventListener("click", async () => {
+        try {
+          await auth.signOut();
+          localStorage.removeItem("currentUser");
+          window.location.href = "index.html";
+        } catch (error) {
+          console.error("Error al cerrar sesión:", error);
+        }
+      });
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+          localStorage.removeItem("currentUser");
+          window.location.href = "index.html";
+        }
+      });
+      // Registrar activo
+      if (activoForm) {
+        activoForm.addEventListener("submit", async function(e) {
+          e.preventDefault();
+          const tipo = document.getElementById("tipoActivo").value;
+          const fechaAdquisicion = document.getElementById("fechaAdquisicion").value;
+          const estado = document.getElementById("estadoActivo").value;
+          const marca = document.getElementById("marcaActivo").value.trim();
+          const modelo = document.getElementById("modeloActivo").value.trim();
+          const serie = document.getElementById("serieActivo").value.trim();
+          const usuarioResponsable = document.getElementById("usuarioResponsable").value.trim();
+          if (!tipo || !fechaAdquisicion || !estado || !marca || !modelo || !serie || !usuarioResponsable) {
+            alert("Por favor, completa todos los campos del activo");
+            return;
+          }
+          const nuevoActivo = {
+            tipo,
+            fechaAdquisicion: fechaAdquisicion ? firebase.firestore.Timestamp.fromDate(new Date(fechaAdquisicion)) : null,
+            estado,
+            marca,
+            modelo,
+            serie,
+            usuarioResponsable
+          };
+          try {
+            await firebase.firestore().collection("activos").add(nuevoActivo);
+            alert("Activo registrado exitosamente");
+            activoForm.reset();
+            await cargarActivos(currentUser);
+          } catch (error) {
+            console.error("Error al registrar activo:", error);
+            alert("Error al registrar el activo");
+          }
+        });
+      }
+      // Mostrar activos
+      async function cargarActivos(currentUser) {
+        if (!listaActivos) return;
+        listaActivos.innerHTML = '<p>Cargando activos...</p>';
+        try {
+          const snapshot = await firebase.firestore().collection("activos").orderBy("fechaAdquisicion", "desc").get();
+          if (snapshot.empty) {
+            listaActivos.innerHTML = '<p>No hay activos registrados.</p>';
+            return;
+          }
+          let html = '<table border="1" cellpadding="6" style="width:100%;border-collapse:collapse;"><thead><tr><th>Tipo</th><th>Fecha adquisición</th><th>Estado</th><th>Marca</th><th>Modelo</th><th>Serie</th><th>Responsable</th>';
+          if (currentUser.role === "agente") html += '<th>Acciones</th>';
+          html += '</tr></thead><tbody>';
+          snapshot.forEach(doc => {
+            const a = doc.data();
+            const id = doc.id;
+            const fecha = a.fechaAdquisicion && a.fechaAdquisicion.toDate ? a.fechaAdquisicion.toDate().toLocaleDateString("es-CL") : "";
+            html += `<tr>
+              <td>${a.tipo}</td>
+              <td>${fecha}</td>
+              <td>${a.estado}</td>
+              <td>${a.marca}</td>
+              <td>${a.modelo}</td>
+              <td>${a.serie}</td>
+              <td>${a.usuarioResponsable}</td>`;
+            if (currentUser.role === "agente") {
+              html += `<td>
+                <button onclick="editarActivo('${id}')">Editar</button>
+                <button onclick="eliminarActivo('${id}')">Eliminar</button>
+              </td>`;
+            }
+            html += '</tr>';
+          });
+          html += '</tbody></table>';
+          listaActivos.innerHTML = html;
+        } catch (error) {
+          listaActivos.innerHTML = '<p>Error al cargar los activos.</p>';
+        }
+      }
+      // Eliminar activo
+      window.eliminarActivo = async function(id) {
+        if (!confirm("¿Seguro que deseas eliminar este activo?")) return;
+        try {
+          await firebase.firestore().collection("activos").doc(id).delete();
+          await cargarActivos(currentUser);
+        } catch (e) {
+          alert("No se pudo eliminar el activo.");
+        }
+      };
+      // Editar activo
+      window.editarActivo = async function(id) {
+        const doc = await firebase.firestore().collection("activos").doc(id).get();
+        if (!doc.exists) return alert("Activo no encontrado");
+        const a = doc.data();
+        const tipo = prompt("Tipo de hardware:", a.tipo);
+        const fechaAdquisicion = prompt("Fecha de adquisición (YYYY-MM-DD):", a.fechaAdquisicion && a.fechaAdquisicion.toDate ? a.fechaAdquisicion.toDate().toISOString().slice(0,10) : "");
+        const estado = prompt("Estado (operativo/obsoleto):", a.estado);
+        const marca = prompt("Marca:", a.marca);
+        const modelo = prompt("Modelo:", a.modelo);
+        const serie = prompt("Número de serie:", a.serie);
+        const usuarioResponsable = prompt("Usuario responsable:", a.usuarioResponsable);
+        if (!tipo || !fechaAdquisicion || !estado || !marca || !modelo || !serie || !usuarioResponsable) return alert("Todos los campos son obligatorios");
+        try {
+          await firebase.firestore().collection("activos").doc(id).update({
+            tipo,
+            fechaAdquisicion: firebase.firestore.Timestamp.fromDate(new Date(fechaAdquisicion)),
+            estado,
+            marca,
+            modelo,
+            serie,
+            usuarioResponsable
+          });
+          await cargarActivos(currentUser);
+        } catch (e) {
+          alert("No se pudo actualizar el activo.");
+        }
+      };
+    });
+    // Menú desplegable para navegación principal
+    document.addEventListener('DOMContentLoaded', function() {
+      const menuToggle = document.getElementById('menuToggle');
+      const mainMenu = document.getElementById('mainMenu');
+      if (menuToggle && mainMenu) {
+        menuToggle.addEventListener('click', function(e) {
+          e.stopPropagation();
+          mainMenu.classList.toggle('show');
+        });
+        document.addEventListener('click', function(e) {
+          if (!mainMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+            mainMenu.classList.remove('show');
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

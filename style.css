@@ -1,7 +1,7 @@
 /* Variables para colores consistentes */
 :root {
-  --primary-color: #3498db;
-  --primary-hover: #2980b9;
+  --primary-color: #0cc;
+  --primary-hover: #099;
   --secondary-color: #2c3e50;
   --accent-color: #e74c3c;
   --light-bg: #f0f4f8;
@@ -166,7 +166,7 @@ button i {
 }
 
 .app-header {
-  background-color: var(--secondary-color);
+  background-color: var(--primary-color);
   color: var(--white);
   padding: 1rem 2rem;
   display: flex;
@@ -181,6 +181,7 @@ button i {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  color: var(--white);
 }
 
 .user-info {
@@ -194,66 +195,47 @@ button i {
 }
 
 .user-info button {
-  background-color: transparent;
+  background: var(--white);
+  color: var(--primary-color);
   border: 1px solid var(--white);
   padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
 }
 
 .user-info button:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background: var(--primary-color);
+  color: var(--white);
+  border: 1px solid var(--white);
 }
 
 .dashboard {
   display: flex;
-  padding: 1.5rem;
+  justify-content: center;
+  align-items: flex-start; /* Cambia a center para centrar verticalmente toda la pantalla */
+  min-height: 80vh;
   gap: 1.5rem;
-  flex: 1;
+  padding: 1.5rem;
 }
 
 @media (max-width: 992px) {
   .dashboard {
     flex-direction: column;
+    align-items: stretch;
+  }
+  .ticket-form {
+    max-width: 100%;
   }
 }
 
 /* Formulario de tickets */
 .ticket-form {
-  flex: 1;
-  padding: 1.5rem;
+  max-width: 420px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.form-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.form-col {
-  flex: 1;
-}
-
-.info-dinamica {
-  background-color: var(--light-bg);
-  border-radius: var(--border-radius);
-  padding: 1rem;
-  margin: 1rem 0;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-}
-
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.info-item i {
-  color: var(--primary-color);
-  font-size: 1.2rem;
-}
-
-/* Lista de tickets */
 .ticket-list-container {
   flex: 2;
   display: flex;
@@ -549,6 +531,7 @@ button i {
     gap: 1rem;
   }
 }
+
 /* Navegación principal */
 nav {
   display: flex;
@@ -580,4 +563,134 @@ nav ul li a:hover,
 nav ul li a.active {
   background-color: var(--primary-color);
   color: var(--white);
+}
+
+/* Menú desplegable para navegación principal */
+.dropdown-nav {
+  position: relative;
+}
+.menu-toggle {
+  background: var(--white);
+  color: var(--primary-color);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 0.6rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: var(--transition);
+  box-shadow: var(--box-shadow);
+}
+.menu-toggle:focus {
+  outline: 2px solid var(--primary-hover);
+}
+.menu-toggle:hover {
+  background: var(--primary-color);
+  color: var(--white);
+}
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 110%;
+  left: 0;
+  min-width: 200px;
+  background: var(--white);
+  box-shadow: var(--box-shadow);
+  border-radius: var(--border-radius);
+  z-index: 100;
+  padding: 0.5rem 0;
+  list-style: none;
+}
+.dropdown-menu.show {
+  display: block;
+}
+.dropdown-menu li {
+  width: 100%;
+}
+.dropdown-menu a {
+  background: var(--white);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  border: none;
+  width: 100%;
+  transition: var(--transition);
+}
+.dropdown-menu a.active,
+.dropdown-menu a:hover {
+  background: var(--primary-color);
+  color: var(--white);
+}
+@media (max-width: 600px) {
+  .dropdown-menu {
+    min-width: 140px;
+    left: auto;
+    right: 0;
+  }
+}
+
+/* Menú lateral fijo a la izquierda */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+.sidebar-nav {
+  width: 220px;
+  background: var(--white);
+  box-shadow: 2px 0 8px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  padding-top: 2rem;
+  z-index: 10;
+}
+.sidebar-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.sidebar-nav li {
+  width: 100%;
+}
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 1.5rem;
+  color: var(--primary-color);
+  font-weight: 500;
+  border: none;
+  background: none;
+  width: 100%;
+  font-size: 1.05rem;
+  transition: var(--transition);
+  border-left: 4px solid transparent;
+}
+.sidebar-nav a.active,
+.sidebar-nav a:hover {
+  background: var(--primary-color);
+  color: var(--white);
+  border-left: 4px solid var(--primary-hover);
+}
+@media (max-width: 800px) {
+  .sidebar-nav {
+    width: 100px;
+    padding-top: 1rem;
+  }
+  .sidebar-nav a {
+    font-size: 0.95rem;
+    padding: 0.8rem 0.7rem;
+  }
+}
+.app-header {
+  width: 100%;
+  /* El header ahora ocupa el resto del espacio */
+}
+.dashboard {
+  flex: 1;
+  /* El dashboard ocupa el espacio restante */
 }

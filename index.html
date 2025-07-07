@@ -15,10 +15,9 @@
 
   <!-- Pantalla de Inicio de Sesión -->
   <div class="login-container" id="loginScreen">
-    <div class="login-header">
-      <h2><i class="fas fa-headset"></i> Service Desk</h2>
-      
-      <p>Universidad de Talca</p>
+    <div class="login-header" style="text-align:center;">
+      <img src="utal.png" alt="Logo Universidad de Talca" style="max-width:180px; margin-bottom:1.5rem;" />
+      <h2 style="margin-bottom:0.5rem;">Service Desk</h2>
     </div>
     
     <form id="loginForm">
@@ -47,14 +46,17 @@
   <!-- Dashboard del Service Desk -->
   <div class="app-container" id="appScreen" style="display:none;">
     <header class="app-header">
-      <div class="logo">
-        <i class="fas fa-headset"></i> Service Desk - UTalca
+      <div class="logo" style="display:flex;align-items:center;gap:0.5rem;">
+        <img src="utal.png" alt="Logo Universidad de Talca" style="max-width:110px;max-height:110px;vertical-align:middle;" />
       </div>
-      <nav>
-        <ul>
+      <nav class="dropdown-nav">
+        <button id="menuToggle" class="menu-toggle"><i class="fas fa-bars"></i> Menú</button>
+        <ul id="mainMenu" class="dropdown-menu">
           <li><a href="#" class="active"><i class="fas fa-home"></i> Inicio</a></li>
           <li><a href="articulos.html"><i class="fas fa-book"></i> Artículos</a></li>
           <li><a href="dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+          <li><a href="cambios.html"><i class="fas fa-exchange-alt"></i> Cambios</a></li>
+          <li><a href="activos.html"><i class="fas fa-desktop"></i> Activos</a></li>
         </ul>
       </nav>
       <div class="user-info" id="userInfo">
@@ -64,7 +66,6 @@
         </button>
       </div>
     </header>
-
     <div class="dashboard">
       <!-- Formulario para crear tickets -->
       <div class="ticket-form" id="ticketFormContainer">
@@ -135,6 +136,16 @@
           <div id="unassignedTickets" class="tickets-grid"></div>
         </div>
       </div>
+
+      <!-- Chat en ticket abierto (solo agente y creador) -->
+      <div id="chatTicketContainer" style="display:none; margin-top:2rem;">
+        <h3><i class="fas fa-comments"></i> Chat del Ticket</h3>
+        <div id="chatMensajes" style="background:#f8f8f8;min-height:120px;max-height:200px;overflow-y:auto;padding:1rem;border-radius:8px;margin-bottom:1rem;"></div>
+        <form id="chatForm" style="display:flex;gap:0.5rem;">
+          <input type="text" id="chatInput" placeholder="Escribe un mensaje..." style="flex:1;" required />
+          <button type="submit"><i class="fas fa-paper-plane"></i></button>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -148,5 +159,23 @@
   
   <!-- Script principal -->
   <script src="script.js"></script>
+  <script>
+    // Menú desplegable para navegación principal
+    document.addEventListener('DOMContentLoaded', function() {
+      const menuToggle = document.getElementById('menuToggle');
+      const mainMenu = document.getElementById('mainMenu');
+      if (menuToggle && mainMenu) {
+        menuToggle.addEventListener('click', function(e) {
+          e.stopPropagation();
+          mainMenu.classList.toggle('show');
+        });
+        document.addEventListener('click', function(e) {
+          if (!mainMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+            mainMenu.classList.remove('show');
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>

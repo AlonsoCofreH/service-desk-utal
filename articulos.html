@@ -131,20 +131,58 @@
         padding: 1rem;
       }
     }
+
+    /* Estilos para menú desplegable */
+    .dropdown-nav {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      background-color: var(--white);
+      min-width: 200px;
+      box-shadow: var(--box-shadow);
+      z-index: 1000;
+      border-radius: var(--border-radius);
+      margin-top: 0.5rem;
+    }
+
+    .dropdown-menu.show {
+      display: block;
+    }
+
+    .dropdown-menu li {
+      padding: 0.5rem 1rem;
+    }
+
+    .dropdown-menu li a {
+      color: var(--dark-gray);
+      text-decoration: none;
+      display: block;
+    }
+
+    .dropdown-menu li a:hover {
+      background-color: var(--light-gray);
+    }
   </style>
 </head>
 <body>
 
   <!-- Header -->
   <header class="app-header">
-    <div class="logo">
-      <i class="fas fa-book"></i> Base de Conocimiento - UTalca
+    <div class="logo" style="display:flex;align-items:center;gap:0.5rem;">
+      <img src="utal.png" alt="Logo Universidad de Talca" style="max-width:110px;max-height:110px;vertical-align:middle;" />
     </div>
-    <nav>
-      <ul>
+    <nav class="dropdown-nav">
+      <button id="menuToggle" class="menu-toggle"><i class="fas fa-bars"></i> Menú</button>
+      <ul id="mainMenu" class="dropdown-menu">
         <li><a href="index.html"><i class="fas fa-home"></i> Inicio</a></li>
-        <li><a href="#" class="active"><i class="fas fa-book"></i> Artículos</a></li>
+        <li><a href="articulos.html" class="active"><i class="fas fa-book"></i> Artículos</a></li>
         <li><a href="dashboard.html"><i class="fas fa-chart-bar"></i> Dashboard</a></li>
+        <li><a href="cambios.html"><i class="fas fa-exchange-alt"></i> Cambios</a></li>
+        <li><a href="activos.html"><i class="fas fa-desktop"></i> Activos</a></li>
       </ul>
     </nav>
     <div class="user-info" id="userInfo">
@@ -335,9 +373,9 @@
             // Cerrar formulario y mostrar botón
             crearArticuloContainer.style.display = "none";
             botonCrearContainer.style.display = "block";
-            
-            // Recargar artículos
-            await cargarArticulos(currentUser);
+
+            // Esperar un momento para asegurar que Firestore indexe el nuevo artículo
+            setTimeout(() => cargarArticulos(currentUser), 600);
             
           } catch (error) {
             console.error("Error al crear artículo:", error);
@@ -400,7 +438,7 @@
         console.log(`Artículos cargados exitosamente: ${articulos.length} artículos`);
       } catch (error) {
         console.error("Error al cargar artículos:", error);
-        contenedor.innerHTML = "<p>Error al cargar los artículos. Por favor, intenta de nuevo.</p>";
+        contenedor.innerHTML = "<p>No hay artículos registrados.</p>";
       }
     }
 
@@ -408,24 +446,31 @@
     async function obtenerArticulosPorTipo(tipo) {
       try {
         console.log("Obteniendo artículos para tipo:", tipo);
-        
-        const snapshot = await firebase.firestore()
-          .collection("articulos")
-          .where("dirigidoA", "in", [tipo, "todos"])
-          .where("activo", "==", true) // Solo artículos activos
-          .orderBy("fechaCreacion", "desc")
-          .get();
-        
-        const articulos = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        
-        console.log(`Artículos encontrados: ${articulos.length}`);
+        // Consulta principal
+        let snapshot = null;
+        try {
+          snapshot = await firebase.firestore()
+            .collection("articulos")
+            .where("dirigidoA", "in", [tipo, "todos"])
+            .where("activo", "==", true)
+            .orderBy("fechaCreacion", "desc")
+            .get();
+        } catch (err) {
+          console.warn("Consulta principal falló, intentando sin filtros...");
+        }
+        if (!snapshot || snapshot.empty) {
+          // Consulta de respaldo: mostrar todos los artículos para depuración
+          const allSnapshot = await firebase.firestore().collection("articulos").get();
+          const articulos = allSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          console.warn("Consulta de respaldo: mostrando todos los artículos:", articulos);
+          return articulos;
+        }
+        const articulos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        console.log(`Artículos encontrados: ${articulos.length}`, articulos);
         return articulos;
       } catch (error) {
         console.error("Error al obtener artículos:", error);
-        throw error; // Re-lanzar el error para manejarlo en la función llamadora
+        throw error;
       }
     }
 
@@ -489,6 +534,23 @@
         btn.disabled = false;
       }
     }
+
+    // Menú desplegable para navegación principal
+    document.addEventListener('DOMContentLoaded', function() {
+      const menuToggle = document.getElementById('menuToggle');
+      const mainMenu = document.getElementById('mainMenu');
+      if (menuToggle && mainMenu) {
+        menuToggle.addEventListener('click', function(e) {
+          e.stopPropagation();
+          mainMenu.classList.toggle('show');
+        });
+        document.addEventListener('click', function(e) {
+          if (!mainMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+            mainMenu.classList.remove('show');
+          }
+        });
+      }
+    });
   </script>
 </body>
 </html>
